@@ -43,3 +43,5 @@
 
 **These features make your study sessions more flexible and targeted!** 🎓
 
+*v1.1 - Includes crash fix for quiz completion*
+
