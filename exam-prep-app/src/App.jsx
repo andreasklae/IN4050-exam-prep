@@ -1,10 +1,11 @@
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Dashboard from './components/Dashboard';
 import Quiz from './components/Quiz';
 import Progress from './components/Progress';
 import Achievements from './components/Achievements';
 import UserSelector from './components/UserSelector';
+import { getProgress, saveProgress, subscribeToProgress } from './services/progressService';
 import './App.css';
 
 function App() {
@@ -13,49 +14,46 @@ function App() {
     return localStorage.getItem('examPrepUser') || null;
   });
 
-  // Load progress for current user from localStorage or initialize
-  const getProgressKey = (user) => `examPrepProgress_${user}`;
-  
-  const [progress, setProgress] = useState(() => {
-    if (!currentUser) return null;
-    const saved = localStorage.getItem(getProgressKey(currentUser));
-    return saved ? JSON.parse(saved) : {
-      completedTopics: {},
-      totalPoints: 0,
-      level: 1,
-      streak: 0,
-      lastStudyDate: null,
-      quizzesCompleted: 0,
-      achievements: [],
-      topicScores: {}
-    };
-  });
+  const [progress, setProgress] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const unsubscribeRef = useRef(null);
 
-  // Update progress when user changes
+  // Load progress when user changes
   useEffect(() => {
     if (!currentUser) {
       setProgress(null);
+      setIsLoading(false);
       return;
     }
-    const saved = localStorage.getItem(getProgressKey(currentUser));
-    setProgress(saved ? JSON.parse(saved) : {
-      completedTopics: {},
-      totalPoints: 0,
-      level: 1,
-      streak: 0,
-      lastStudyDate: null,
-      quizzesCompleted: 0,
-      achievements: [],
-      topicScores: {}
+
+    setIsLoading(true);
+    
+    // Load initial progress from Firestore/localStorage
+    getProgress(currentUser).then((loadedProgress) => {
+      setProgress(loadedProgress);
+      setIsLoading(false);
     });
+
+    // Set up real-time sync
+    unsubscribeRef.current = subscribeToProgress(currentUser, (syncedProgress) => {
+      setProgress(syncedProgress);
+    });
+
+    // Cleanup subscription on unmount or user change
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
   }, [currentUser]);
 
-  // Save progress to localStorage whenever it changes
+  // Save progress to Firestore whenever it changes
   useEffect(() => {
-    if (currentUser && progress) {
-      localStorage.setItem(getProgressKey(currentUser), JSON.stringify(progress));
+    if (currentUser && progress && !isLoading) {
+      saveProgress(currentUser, progress);
     }
-  }, [progress, currentUser]);
+  }, [progress, currentUser, isLoading]);
 
   // Update streak when app loads
   useEffect(() => {
@@ -109,7 +107,27 @@ function App() {
     localStorage.removeItem('examPrepUser');
   };
 
-  if (!currentUser || !progress) {
+  if (!currentUser || isLoading) {
+    return (
+      <div className="app">
+        <UserSelector onUserSelect={handleUserSelect} />
+        {isLoading && currentUser && (
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: 'var(--text)',
+            fontSize: '18px'
+          }}>
+            Loading your progress...
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (!progress) {
     return (
       <div className="app">
         <UserSelector onUserSelect={handleUserSelect} />

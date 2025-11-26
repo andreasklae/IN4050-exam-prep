@@ -125,9 +125,23 @@ The app works great on:
 - Tablets
 - Mobile phones
 
-## 🔒 Privacy
+## 🔒 Privacy & Data Storage
 
-All your progress data is stored locally in your browser using localStorage. No data is sent to external servers.
+### Cross-Device Sync (Recommended)
+The app supports **Firebase Firestore** for syncing progress across all devices and browsers. 
+
+**Setup:** See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for 5-minute setup guide.
+
+**Benefits:**
+- ✅ Progress syncs across all devices
+- ✅ Real-time updates
+- ✅ Works offline (localStorage fallback)
+- ✅ Free tier (50K reads/day, 20K writes/day)
+
+### Local Storage Only (Fallback)
+If Firebase isn't configured, the app automatically uses localStorage only. Progress will be stored per browser/device.
+
+**Note:** To enable cross-device sync, you need to set up Firebase (see setup guide above).
 
 ## 🛠️ Tech Stack
 
