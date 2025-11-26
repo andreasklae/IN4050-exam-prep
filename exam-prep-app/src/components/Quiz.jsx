@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { topics } from '../data/curriculum';
+import { topics, achievements } from '../data/curriculum';
 import { CheckCircle, XCircle, ArrowLeft, ArrowRight, Home, Save } from 'lucide-react';
 import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
@@ -304,7 +304,7 @@ function Quiz({ mode, progress, updateProgress }) {
               <h3>🏆 New Achievements!</h3>
               <div className="achievement-list">
                 {quizComplete.newAchievements.map(achId => {
-                  const ach = require('../data/curriculum').achievements.find(a => a.id === achId);
+                  const ach = achievements.find(a => a.id === achId);
                   return (
                     <div key={achId} className="achievement-item">
                       <span className="achievement-icon">{ach.icon}</span>
