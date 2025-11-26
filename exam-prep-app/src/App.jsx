@@ -1,15 +1,24 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import Quiz from './components/Quiz';
 import Progress from './components/Progress';
 import Achievements from './components/Achievements';
+import UserSelector from './components/UserSelector';
 import './App.css';
 
 function App() {
-  // Load progress from localStorage or initialize
+  // Get current user from localStorage
+  const [currentUser, setCurrentUser] = useState(() => {
+    return localStorage.getItem('examPrepUser') || null;
+  });
+
+  // Load progress for current user from localStorage or initialize
+  const getProgressKey = (user) => `examPrepProgress_${user}`;
+  
   const [progress, setProgress] = useState(() => {
-    const saved = localStorage.getItem('examPrepProgress');
+    if (!currentUser) return null;
+    const saved = localStorage.getItem(getProgressKey(currentUser));
     return saved ? JSON.parse(saved) : {
       completedTopics: {},
       totalPoints: 0,
@@ -22,13 +31,35 @@ function App() {
     };
   });
 
+  // Update progress when user changes
+  useEffect(() => {
+    if (!currentUser) {
+      setProgress(null);
+      return;
+    }
+    const saved = localStorage.getItem(getProgressKey(currentUser));
+    setProgress(saved ? JSON.parse(saved) : {
+      completedTopics: {},
+      totalPoints: 0,
+      level: 1,
+      streak: 0,
+      lastStudyDate: null,
+      quizzesCompleted: 0,
+      achievements: [],
+      topicScores: {}
+    });
+  }, [currentUser]);
+
   // Save progress to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('examPrepProgress', JSON.stringify(progress));
-  }, [progress]);
+    if (currentUser && progress) {
+      localStorage.setItem(getProgressKey(currentUser), JSON.stringify(progress));
+    }
+  }, [progress, currentUser]);
 
   // Update streak when app loads
   useEffect(() => {
+    if (!progress) return;
     const today = new Date().toDateString();
     const lastDate = progress.lastStudyDate;
     
@@ -46,7 +77,7 @@ function App() {
         setProgress(prev => ({ ...prev, streak: 0 }));
       }
     }
-  }, []);
+  }, [progress]);
 
   const updateProgress = (updates) => {
     setProgress(prev => {
@@ -68,14 +99,33 @@ function App() {
     // Achievements are checked and awarded when relevant actions occur
   };
 
+  const handleUserSelect = (user) => {
+    setCurrentUser(user);
+    localStorage.setItem('examPrepUser', user);
+  };
+
+  const handleUserSwitch = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('examPrepUser');
+  };
+
+  if (!currentUser || !progress) {
+    return (
+      <div className="app">
+        <UserSelector onUserSelect={handleUserSelect} />
+      </div>
+    );
+  }
+
   return (
     <Router>
       <div className="app">
+        <UserSelector onUserSelect={handleUserSelect} />
         <Routes>
-          <Route path="/" element={<Dashboard progress={progress} />} />
-          <Route path="/quiz/:topicId" element={<Quiz progress={progress} updateProgress={updateProgress} />} />
-          <Route path="/progress" element={<Progress progress={progress} />} />
-          <Route path="/achievements" element={<Achievements progress={progress} />} />
+          <Route path="/" element={<Dashboard progress={progress} currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
+          <Route path="/quiz/:topicId" element={<Quiz progress={progress} updateProgress={updateProgress} currentUser={currentUser} />} />
+          <Route path="/progress" element={<Progress progress={progress} currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
+          <Route path="/achievements" element={<Achievements progress={progress} currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
         </Routes>
       </div>
     </Router>

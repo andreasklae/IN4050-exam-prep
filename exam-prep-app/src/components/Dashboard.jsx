@@ -1,20 +1,35 @@
 import { Link } from 'react-router-dom';
 import { topics } from '../data/curriculum';
-import { Trophy, Target, Flame, TrendingUp } from 'lucide-react';
+import { Trophy, Target, Flame, TrendingUp, User, LogOut } from 'lucide-react';
 import './Dashboard.css';
 
-function Dashboard({ progress }) {
+function Dashboard({ progress, currentUser, onUserSwitch }) {
   const completedCount = Object.keys(progress.completedTopics).length;
   const completionPercentage = Math.round((completedCount / topics.length) * 100);
+
+  const userName = currentUser === 'john' ? 'John' : 'Andreas';
 
   return (
     <div className="dashboard">
       <header className="dashboard-header">
         <div className="header-content">
-          <h1 className="main-title">
-            <span className="emoji">🎓</span>
-            IN4050 Exam Prep
-          </h1>
+          <div className="user-badge-container">
+            <h1 className="main-title">
+              <span className="emoji">🎓</span>
+              IN4050 Exam Prep
+            </h1>
+            <div className="user-badge">
+              <User size={18} />
+              <span>{userName}</span>
+              <button 
+                className="switch-user-btn"
+                onClick={onUserSwitch}
+                title="Switch user"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          </div>
           <p className="subtitle">Master AI & Machine Learning concepts</p>
         </div>
         

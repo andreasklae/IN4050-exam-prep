@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { achievements } from '../data/curriculum';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft, Lock, User } from 'lucide-react';
 import './Achievements.css';
 
-function Achievements({ progress }) {
+function Achievements({ progress, currentUser, onUserSwitch }) {
   const navigate = useNavigate();
+  const userName = currentUser === 'john' ? 'John' : 'Andreas';
   
   const unlockedCount = progress.achievements.length;
   const totalCount = achievements.length;
@@ -16,7 +17,11 @@ function Achievements({ progress }) {
           <ArrowLeft size={20} />
           Back
         </button>
-        <h1>Achievements</h1>
+        <h1>{userName}'s Achievements</h1>
+        <button onClick={onUserSwitch} className="switch-user-btn-header" title="Switch user">
+          <User size={18} />
+          <span>Switch</span>
+        </button>
       </header>
 
       <div className="achievements-content">

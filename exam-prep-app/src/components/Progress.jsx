@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { topics } from '../data/curriculum';
-import { ArrowLeft, TrendingUp, Target, Award } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Target, Award, User, LogOut } from 'lucide-react';
 import './Progress.css';
 
-function Progress({ progress }) {
+function Progress({ progress, currentUser, onUserSwitch }) {
   const navigate = useNavigate();
+  const userName = currentUser === 'john' ? 'John' : 'Andreas';
   
   const completedCount = Object.keys(progress.completedTopics).length;
   const totalQuestions = topics.reduce((sum, topic) => sum + topic.questions.length, 0);
@@ -19,7 +20,11 @@ function Progress({ progress }) {
           <ArrowLeft size={20} />
           Back
         </button>
-        <h1>Your Progress</h1>
+        <h1>{userName}'s Progress</h1>
+        <button onClick={onUserSwitch} className="switch-user-btn-header" title="Switch user">
+          <User size={18} />
+          <span>Switch</span>
+        </button>
       </header>
 
       <div className="progress-content">
