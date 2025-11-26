@@ -53,9 +53,49 @@
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 32px;
-  line-height: 1.4;
+  line-height: 1.6;
   color: var(--text);
   animation: slideIn 0.4s ease;
+  white-space: pre-wrap; /* Preserve line breaks for formulas */
+}
+
+/* KaTeX formula styling */
+.question-text .katex {
+  font-size: 1.1em;
+  color: var(--text);
+}
+
+.question-text .katex-display {
+  margin: 24px 0;
+  padding: 20px;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 12px;
+  border-left: 4px solid var(--primary);
+}
+
+.question-text .katex-display > .katex {
+  font-size: 1.3em;
+}
+
+/* Ensure formula text is visible */
+.katex .mord,
+.katex .mbin,
+.katex .mrel,
+.katex .mop,
+.katex .mpunct,
+.katex .mopen,
+.katex .mclose {
+  color: var(--text);
+}
+
+/* Formula styling within questions */
+.question-text code {
+  background: var(--surface);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 24px;
+  color: #fbbf24;
 }
 
 .options-list {
@@ -143,6 +183,24 @@
   font-size: 16px;
   line-height: 1.5;
   color: var(--text);
+}
+
+/* KaTeX in options */
+.option-text .katex {
+  font-size: 1em;
+  color: var(--text);
+}
+
+.option-text .katex-display {
+  margin: 8px 0;
+  padding: 0;
+  background: transparent;
+  border-left: none;
+  text-align: left;
+}
+
+.option-text .katex-display > .katex {
+  font-size: 1.1em;
 }
 
 .option-icon {
@@ -383,4 +441,3 @@
     flex-direction: column;
   }
 }
-

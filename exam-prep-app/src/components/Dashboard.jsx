@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { topics } from '../data/curriculum';
-import { Trophy, Target, Flame, TrendingUp, User, LogOut, Users } from 'lucide-react';
+import { Trophy, Target, Flame, TrendingUp, User, LogOut, Users, Shuffle, AlertCircle } from 'lucide-react';
 import './Dashboard.css';
 
 function Dashboard({ progress, currentUser, onUserSwitch }) {
@@ -231,6 +231,29 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
             </div>
           </div>
         )}
+
+        {/* Special Practice Modes */}
+        <div className="practice-modes">
+          <Link to="/random" className="mode-card random-mode">
+            <div className="mode-icon">
+              <Shuffle size={24} />
+            </div>
+            <div className="mode-content">
+              <h3>Random Quiz</h3>
+              <p>15 mixed questions from all topics</p>
+            </div>
+          </Link>
+          
+          <Link to="/mistakes" className="mode-card mistakes-mode">
+            <div className="mode-icon">
+              <AlertCircle size={24} />
+            </div>
+            <div className="mode-content">
+              <h3>Review Mistakes</h3>
+              <p>Practice questions you missed ({progress.incorrectQuestions?.length || 0})</p>
+            </div>
+          </Link>
+        </div>
 
         <div className="topics-grid">
           {topics.map(topic => {

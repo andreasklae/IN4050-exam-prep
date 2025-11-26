@@ -373,12 +373,80 @@
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
 }
 
-/* Knowledge Summary */
-.knowledge-summary {
+/* Practice Modes */
+.practice-modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+  animation: fadeIn 0.8s ease;
+}
+
+.mode-card {
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.mode-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+
+.random-mode {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+  border-color: #10b981;
+}
+
+.random-mode:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+}
+
+.random-mode .mode-icon {
+  background: #10b981;
+  color: white;
+}
+
+.mistakes-mode {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(239, 68, 68, 0.1));
+  border-color: #f97316;
+}
+
+.mistakes-mode:hover {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(239, 68, 68, 0.2));
+}
+
+.mistakes-mode .mode-icon {
+  background: #f97316;
+  color: white;
+}
+
+.mode-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.mode-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.mode-content p {
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .summary-item {

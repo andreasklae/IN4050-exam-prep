@@ -1,30 +1,141 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { topics } from '../data/curriculum';
-import { CheckCircle, XCircle, ArrowLeft, ArrowRight, Home } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowLeft, ArrowRight, Home, Save } from 'lucide-react';
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 import './Quiz.css';
 
-function Quiz({ progress, updateProgress }) {
+function Quiz({ mode, progress, updateProgress }) {
   const { topicId } = useParams();
   const navigate = useNavigate();
-  const topic = topics.find(t => t.id === parseInt(topicId));
   
+  // State
+  const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [answers, setAnswers] = useState([]);
   const [quizComplete, setQuizComplete] = useState(false);
   const [startTime] = useState(Date.now());
+  const [quizTopic, setQuizTopic] = useState(null);
 
-  if (!topic) {
-    return <div>Topic not found</div>;
+  // Initialize quiz based on mode
+  useEffect(() => {
+    if (mode === 'random') {
+      // Random Quiz: Select 15 random questions from all topics
+      const allQuestions = topics.flatMap(t => t.questions.map(q => ({ ...q, topicId: t.id })));
+      const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+      setQuestions(shuffled.slice(0, 15));
+      setQuizTopic({
+        title: "Random Quiz",
+        icon: "🎲",
+        color: "#10b981"
+      });
+    } else if (mode === 'mistakes') {
+      // Mistakes Review: Load incorrect questions
+      const incorrectIds = progress.incorrectQuestions || [];
+      
+      if (incorrectIds.length === 0) {
+        setQuestions([]); // Will trigger empty state
+      } else {
+        const mistakesList = [];
+        // Find question objects for the stored IDs
+        incorrectIds.forEach(item => {
+          const topic = topics.find(t => t.id === item.topicId);
+          if (topic) {
+            const question = topic.questions.find(q => q.id === item.questionId);
+            if (question) {
+              mistakesList.push({ ...question, topicId: topic.id });
+            }
+          }
+        });
+        setQuestions(mistakesList);
+      }
+      
+      setQuizTopic({
+        title: "Mistakes Review",
+        icon: "⚠️",
+        color: "#f97316"
+      });
+    } else {
+      // Normal Topic Quiz
+      const topic = topics.find(t => t.id === parseInt(topicId));
+      if (topic) {
+        setQuestions(topic.questions.map(q => ({ ...q, topicId: topic.id })));
+        setQuizTopic(topic);
+      }
+    }
+  }, [mode, topicId, progress.incorrectQuestions]);
+
+  // Helper function to render text with LaTeX formulas
+  const renderMathText = (text) => {
+    if (!text) return null;
+    
+    const parts = [];
+    let remaining = text;
+    let key = 0;
+    
+    while (remaining.length > 0) {
+      const blockMatch = remaining.match(/^\$\$([\s\S]+?)\$\$/);
+      if (blockMatch) {
+        parts.push(<BlockMath key={key++} math={blockMatch[1].trim()} />);
+        remaining = remaining.slice(blockMatch[0].length);
+        continue;
+      }
+      
+      const inlineMatch = remaining.match(/^\$([^$]+?)\$/);
+      if (inlineMatch) {
+        parts.push(<InlineMath key={key++} math={inlineMatch[1]} />);
+        remaining = remaining.slice(inlineMatch[0].length);
+        continue;
+      }
+      
+      const nextDollar = remaining.search(/\$/);
+      const textEnd = nextDollar === -1 ? remaining.length : nextDollar;
+      if (textEnd > 0) {
+        const textPart = remaining.slice(0, textEnd);
+        textPart.split('\n').forEach((line, i) => {
+          if (i > 0) parts.push(<br key={`br-${key++}`} />);
+          if (line) parts.push(<span key={key++}>{line}</span>);
+        });
+        remaining = remaining.slice(textEnd);
+      } else {
+        break;
+      }
+    }
+    
+    return <>{parts}</>;
+  };
+
+  if (!quizTopic) return <div>Loading...</div>;
+
+  // Handle empty state for mistakes mode
+  if (questions.length === 0 && mode === 'mistakes') {
+    return (
+      <div className="quiz-complete">
+        <div className="complete-content">
+          <div className="complete-header">
+            <div className="complete-icon">🎉</div>
+            <h1>Great Job!</h1>
+            <p>You have no incorrect questions to review.</p>
+          </div>
+          <button onClick={() => navigate('/')} className="btn-primary">
+            <Home size={20} />
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  const currentQuestion = topic.questions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === topic.questions.length - 1;
+  if (questions.length === 0) return <div>Topic not found</div>;
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
   const handleAnswerSelect = (index) => {
-    if (showExplanation) return; // Prevent changing answer after submission
+    if (showExplanation) return;
     setSelectedAnswer(index);
   };
 
@@ -34,6 +145,25 @@ function Quiz({ progress, updateProgress }) {
     setShowExplanation(true);
     const isCorrect = selectedAnswer === currentQuestion.correct;
     setAnswers([...answers, { questionId: currentQuestion.id, correct: isCorrect }]);
+
+    // Update incorrect questions list immediately
+    let newIncorrect = [...(progress.incorrectQuestions || [])];
+    const questionRef = { topicId: currentQuestion.topicId, questionId: currentQuestion.id };
+    
+    if (!isCorrect) {
+      // Add to mistakes if not already there
+      if (!newIncorrect.some(q => q.questionId === questionRef.questionId)) {
+        newIncorrect.push(questionRef);
+      }
+    } else {
+      // Remove from mistakes if correct
+      newIncorrect = newIncorrect.filter(q => q.questionId !== questionRef.questionId);
+    }
+
+    // Update progress immediately for this question result
+    updateProgress({
+      incorrectQuestions: newIncorrect
+    });
   };
 
   const handleNextQuestion = () => {
@@ -46,20 +176,25 @@ function Quiz({ progress, updateProgress }) {
     }
   };
 
+  const handleExit = () => {
+    // Save any progress made so far is already handled by handleSubmitAnswer
+    navigate('/');
+  };
+
   const completeQuiz = () => {
     const correctCount = answers.filter(a => a.correct).length + 
                         (selectedAnswer === currentQuestion.correct ? 1 : 0);
-    const totalQuestions = topic.questions.length;
+    const totalQuestions = questions.length;
     const scorePercentage = Math.round((correctCount / totalQuestions) * 100);
     const timeSpent = Math.round((Date.now() - startTime) / 1000);
     
-    // Calculate points: base points + bonus for high score
+    // Calculate points
     const basePoints = correctCount * 10;
     const bonusPoints = scorePercentage >= 80 ? 20 : scorePercentage >= 60 ? 10 : 0;
     const speedBonus = timeSpent < 120 ? 15 : 0;
     const totalPoints = basePoints + bonusPoints + speedBonus;
     
-    // Update streak
+    // Streak logic
     const today = new Date().toDateString();
     const lastDate = progress.lastStudyDate;
     let newStreak = progress.streak;
@@ -80,52 +215,30 @@ function Quiz({ progress, updateProgress }) {
       }
     }
     
-    // Check for achievements
+    // Achievements logic
     const newAchievements = [...progress.achievements];
+    if (progress.quizzesCompleted === 0 && !newAchievements.includes('first_quiz')) newAchievements.push('first_quiz');
+    if (scorePercentage === 100 && !newAchievements.includes('topic_master')) newAchievements.push('topic_master');
+    if (timeSpent < 120 && !newAchievements.includes('speed_demon')) newAchievements.push('speed_demon');
+    if (newStreak >= 3 && !newAchievements.includes('dedicated_learner')) newAchievements.push('dedicated_learner');
     
-    // First quiz achievement
-    if (progress.quizzesCompleted === 0 && !newAchievements.includes('first_quiz')) {
-      newAchievements.push('first_quiz');
-    }
-    
-    // Perfect score achievement
-    if (scorePercentage === 100 && !newAchievements.includes('topic_master')) {
-      newAchievements.push('topic_master');
-    }
-    
-    // Speed demon
-    if (timeSpent < 120 && !newAchievements.includes('speed_demon')) {
-      newAchievements.push('speed_demon');
-    }
-    
-    // Streak achievement
-    if (newStreak >= 3 && !newAchievements.includes('dedicated_learner')) {
-      newAchievements.push('dedicated_learner');
-    }
-    
-    // Update progress
+    // Only update topic completion/scores for normal quizzes
     const newCompletedTopics = { ...progress.completedTopics };
-    newCompletedTopics[topic.id] = true;
-    
     const newTopicScores = { ...progress.topicScores };
-    newTopicScores[topic.id] = Math.max(newTopicScores[topic.id] || 0, scorePercentage);
-    
-    // Check if all topics completed
-    if (Object.keys(newCompletedTopics).length === topics.length && 
-        !newAchievements.includes('knowledge_seeker')) {
-      newAchievements.push('knowledge_seeker');
-    }
-    
-    // Check if all topics 80%+
-    const allTopics80Plus = topics.every(t => (newTopicScores[t.id] || 0) >= 80);
-    if (allTopics80Plus && !newAchievements.includes('exam_ready')) {
-      newAchievements.push('exam_ready');
-    }
-    
-    // Count perfect scores
-    const perfectScores = Object.values(newTopicScores).filter(s => s === 100).length;
-    if (perfectScores >= 3 && !newAchievements.includes('perfectionist')) {
-      newAchievements.push('perfectionist');
+
+    if (!mode) {
+      newCompletedTopics[quizTopic.id] = true;
+      newTopicScores[quizTopic.id] = Math.max(newTopicScores[quizTopic.id] || 0, scorePercentage);
+      
+      if (Object.keys(newCompletedTopics).length === topics.length && !newAchievements.includes('knowledge_seeker')) {
+        newAchievements.push('knowledge_seeker');
+      }
+      if (topics.every(t => (newTopicScores[t.id] || 0) >= 80) && !newAchievements.includes('exam_ready')) {
+        newAchievements.push('exam_ready');
+      }
+      if (Object.values(newTopicScores).filter(s => s === 100).length >= 3 && !newAchievements.includes('perfectionist')) {
+        newAchievements.push('perfectionist');
+      }
     }
     
     updateProgress({
@@ -157,7 +270,7 @@ function Quiz({ progress, updateProgress }) {
               {quizComplete.score >= 80 ? '🎉' : quizComplete.score >= 60 ? '👍' : '💪'}
             </div>
             <h1>Quiz Complete!</h1>
-            <p className="topic-name">{topic.title}</p>
+            <p className="topic-name">{quizTopic.title}</p>
           </div>
           
           <div className="score-display">
@@ -221,32 +334,32 @@ function Quiz({ progress, updateProgress }) {
   }
 
   return (
-    <div className="quiz" style={{ '--topic-color': topic.color }}>
+    <div className="quiz" style={{ '--topic-color': quizTopic.color }}>
       <div className="quiz-header">
-        <button onClick={() => navigate('/')} className="back-btn">
+        <button onClick={handleExit} className="back-btn" title="Exit and save progress">
           <ArrowLeft size={20} />
-          Back
+          Exit
         </button>
         <div className="quiz-progress">
           <div className="progress-text">
-            Question {currentQuestionIndex + 1} of {topic.questions.length}
+            Question {currentQuestionIndex + 1} of {questions.length}
           </div>
           <div className="progress-bar">
             <div 
               className="progress-fill" 
-              style={{ width: `${((currentQuestionIndex + 1) / topic.questions.length) * 100}%` }}
+              style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
         </div>
       </div>
 
       <div className="quiz-content">
-        <div className="topic-badge" style={{ backgroundColor: topic.color }}>
-          <span className="topic-icon">{topic.icon}</span>
-          <span>{topic.title}</span>
+        <div className="topic-badge" style={{ backgroundColor: quizTopic.color }}>
+          <span className="topic-icon">{quizTopic.icon}</span>
+          <span>{quizTopic.title}</span>
         </div>
 
-        <h2 className="question-text">{currentQuestion.question}</h2>
+        <h2 className="question-text">{renderMathText(currentQuestion.question)}</h2>
 
         <div className="options-list">
           {currentQuestion.options.map((option, index) => {
@@ -269,7 +382,7 @@ function Quiz({ progress, updateProgress }) {
                 <span className="option-letter">
                   {String.fromCharCode(65 + index)}
                 </span>
-                <span className="option-text">{option}</span>
+                <span className="option-text">{renderMathText(option)}</span>
                 {showStatus && isCorrect && (
                   <CheckCircle className="option-icon" size={24} />
                 )}
@@ -325,4 +438,3 @@ function Quiz({ progress, updateProgress }) {
 }
 
 export default Quiz;
-

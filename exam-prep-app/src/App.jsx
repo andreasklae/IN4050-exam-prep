@@ -139,7 +139,7 @@ function App() {
   }
 
   if (!progress) {
-    return (
+  return (
       <div className="app">
         <UserSelector onUserSelect={handleUserSelect} />
       </div>
@@ -153,6 +153,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard progress={progress} currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
           <Route path="/quiz/:topicId" element={<Quiz progress={progress} updateProgress={updateProgress} currentUser={currentUser} />} />
+          <Route path="/mistakes" element={<Quiz mode="mistakes" progress={progress} updateProgress={updateProgress} currentUser={currentUser} />} />
+          <Route path="/random" element={<Quiz mode="random" progress={progress} updateProgress={updateProgress} currentUser={currentUser} />} />
           <Route path="/progress" element={<Progress progress={progress} currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
           <Route path="/achievements" element={<Achievements progress={progress} currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
           <Route path="/comparison" element={<Comparison currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />

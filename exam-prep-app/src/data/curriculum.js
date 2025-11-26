@@ -935,6 +935,255 @@ export const topics = [
         explanation: "Self-organizing maps are a type of neural network used for dimensionality reduction and visualization, mapping high-dimensional data to lower dimensions while preserving topology."
       }
     ]
+  },
+  {
+    id: 9,
+    title: "Formulas & Math Foundations",
+    icon: "📐",
+    description: "Mathematical formulas, equations, and their applications in AI/ML",
+    color: "#14b8a6",
+    questions: [
+      {
+        id: "form-1",
+        question: "What does this formula calculate?\n\n$$z_j^{[k]} = \\sum_{i=0}^{n^{[k-1]}} w_{ij}^{[k]} a_i^{[k-1]}$$",
+        options: [
+          "The activation of node j in layer k",
+          "The weighted sum in node j in layer k",
+          "The output of the neural network",
+          "The gradient of the loss function"
+        ],
+        correct: 1,
+        explanation: "This is the weighted sum formula for node j in layer k. It sums the products of weights and activations from the previous layer."
+      },
+      {
+        id: "form-2",
+        question: "What does this formula represent?\n\n$$a_j^{[k]} = g(z_j^{[k]})$$",
+        options: [
+          "The weighted sum in node j",
+          "The activation/output of node j in layer k after applying activation function g",
+          "The loss function",
+          "The learning rate"
+        ],
+        correct: 1,
+        explanation: "This represents the activation of node j in layer k, obtained by applying the activation function g to the weighted sum."
+      },
+      {
+        id: "form-3",
+        question: "What is this formula?\n\n$$\\text{ReLU}(x) = \\max(x, 0)$$",
+        options: [
+          "Sigmoid activation function",
+          "Softmax function",
+          "Rectified Linear Unit (ReLU) activation function",
+          "Tanh activation function"
+        ],
+        correct: 2,
+        explanation: "This is the ReLU (Rectified Linear Unit) activation function, the preferred activation in deep networks. It outputs x if x > 0, otherwise 0."
+      },
+      {
+        id: "form-4",
+        question: "What does this formula calculate?\n\n$$\\text{MSE} = \\frac{1}{N} \\sum_{j=1}^{N} (t_j - y_j)^2$$",
+        options: [
+          "Cross-entropy loss",
+          "Mean Squared Error for regression",
+          "Precision",
+          "Recall"
+        ],
+        correct: 1,
+        explanation: "This is the Mean Squared Error (MSE) loss function, used in regression tasks. It measures the average squared difference between target values and predicted values."
+      },
+      {
+        id: "form-5",
+        question: "What is this the formula for?\n\n$$y_j = \\frac{e^{z_j}}{\\sum_{k=1}^{n} e^{z_k}}$$",
+        options: [
+          "ReLU activation",
+          "Sigmoid function",
+          "Softmax function for multi-class classification",
+          "Linear activation"
+        ],
+        correct: 2,
+        explanation: "This is the Softmax function used in multinomial logistic regression. It converts linear outputs (z) into a probability distribution over classes."
+      },
+      {
+        id: "form-6",
+        question: "What does the gradient $\\nabla f(x)$ represent in this update rule?\n\n$$x^{(k+1)} = x^{(k)} + \\gamma \\nabla f(x^{(k)})$$",
+        options: [
+          "The minimum of the function",
+          "The direction of steepest ascent (maximization)",
+          "The learning rate",
+          "The loss value"
+        ],
+        correct: 1,
+        explanation: "This is the gradient ascent update rule. The gradient points in the direction of steepest increase, so adding it maximizes f(x). For descent (minimization), we subtract."
+      },
+      {
+        id: "form-7",
+        question: "What is $\\gamma$ (gamma) in this formula?\n\n$$x_{i+1} = x_i - \\gamma f'(x_i)$$",
+        options: [
+          "The gradient",
+          "The learning rate (step size)",
+          "The loss function",
+          "The activation function"
+        ],
+        correct: 1,
+        explanation: "γ (gamma) is the learning rate in gradient descent. It controls how large a step we take in the direction of the gradient."
+      },
+      {
+        id: "form-8",
+        question: "What does this formula calculate?\n\n$$\\text{Precision} = \\frac{TP}{TP + FP}$$",
+        options: [
+          "The percentage of actual positives found",
+          "The accuracy of positive predictions",
+          "The overall accuracy",
+          "The false positive rate"
+        ],
+        correct: 1,
+        explanation: "Precision measures the accuracy of positive predictions: what proportion of items predicted as positive are actually positive. It focuses on minimizing false positives."
+      },
+      {
+        id: "form-9",
+        question: "What does this formula calculate?\n\n$$\\text{Recall} = \\frac{TP}{TP + FN}$$",
+        options: [
+          "The accuracy of positive predictions",
+          "The percentage of actual positives that were correctly identified",
+          "The overall accuracy",
+          "The precision"
+        ],
+        correct: 1,
+        explanation: "Recall (sensitivity or TPR) measures what percentage of actual positive cases were correctly identified. It focuses on minimizing false negatives."
+      },
+      {
+        id: "form-10",
+        question: "What is this formula used for in gradient descent?\n\n$$w_{ij} = w_{ij} - \\eta \\frac{\\partial L}{\\partial w_{ij}}$$",
+        options: [
+          "Calculating the loss",
+          "Updating weights to minimize loss",
+          "Computing activations",
+          "Calculating the gradient"
+        ],
+        correct: 1,
+        explanation: "This is the weight update formula in gradient descent. It adjusts weight by subtracting the learning rate times the partial derivative of the loss with respect to that weight."
+      },
+      {
+        id: "form-11",
+        question: "What does this represent?\n\n$$L_{CE}(\\mathbf{y}, \\mathbf{t}) = -\\sum_{j=1}^{n} t_j \\log(y_j)$$",
+        options: [
+          "Mean Squared Error",
+          "Cross-Entropy Loss for classification",
+          "ReLU activation",
+          "Gradient descent"
+        ],
+        correct: 1,
+        explanation: "This is the Cross-Entropy Loss function used in classification, particularly with softmax. It measures how well the predicted probability distribution matches the true distribution."
+      },
+      {
+        id: "form-12",
+        question: "What does this formula describe in evolutionary algorithms?\n\n$$x'_i = x_i + N(0, \\sigma)$$",
+        options: [
+          "Crossover operation",
+          "Fitness evaluation",
+          "Mutation with Gaussian noise",
+          "Selection probability"
+        ],
+        correct: 2,
+        explanation: "This is the mutation formula in evolutionary algorithms with real-valued representation. It adds Gaussian noise with mean 0 and standard deviation σ to create variation."
+      },
+      {
+        id: "form-13",
+        question: "What operation does this formula perform?\n\n$$z_i = \\alpha x_i + (1-\\alpha) y_i \\text{ where } 0 \\leq \\alpha \\leq 1$$",
+        options: [
+          "Mutation",
+          "Selection",
+          "Intermediate Recombination (crossover)",
+          "Fitness evaluation"
+        ],
+        correct: 2,
+        explanation: "This is the Intermediate Recombination formula in evolutionary algorithms. It creates offspring z by blending parent values x and y with weight α."
+      },
+      {
+        id: "form-14",
+        question: "What is the Chain Rule formula used in backpropagation?\n\n$$\\frac{d f(g(x))}{d x} = \\text{?}$$",
+        options: [
+          "$\\frac{df}{dx} \\times \\frac{dg}{dx}$",
+          "$\\frac{df}{dg} \\times \\frac{dg}{dx}$",
+          "$\\frac{df}{dx} + \\frac{dg}{dx}$",
+          "$\\frac{df}{dg} + \\frac{dg}{dx}$"
+        ],
+        correct: 1,
+        explanation: "The Chain Rule states: df(g(x))/dx = (df/dg) × (dg/dx). This is fundamental to backpropagation for computing gradients through multiple layers."
+      },
+      {
+        id: "form-15",
+        question: "What does L2 regularization add to the loss function?\n\n$$R(\\mathbf{w}) = \\sum_{i=0}^{m} w_i^2$$",
+        options: [
+          "Sum of absolute weights",
+          "Sum of squared weights",
+          "Product of weights",
+          "Maximum weight value"
+        ],
+        correct: 1,
+        explanation: "L2 regularization (Ridge) adds the sum of squared weights to the loss function. This penalizes large weights and helps prevent overfitting."
+      },
+      {
+        id: "form-16",
+        question: "What is the difference between L1 and L2 regularization?\n\n$$L1: R(\\mathbf{w}) = \\sum_{i=0}^{m} |w_i| \\quad \\text{vs} \\quad L2: R(\\mathbf{w}) = \\sum_{i=0}^{m} w_i^2$$",
+        options: [
+          "L1 uses absolute values, L2 uses squares",
+          "L1 is for classification, L2 is for regression",
+          "L1 is faster to compute",
+          "There is no difference"
+        ],
+        correct: 0,
+        explanation: "L1 (Lasso) uses sum of absolute values, while L2 (Ridge) uses sum of squares. L1 tends to create sparse weights (some become exactly 0), while L2 shrinks weights toward 0."
+      },
+      {
+        id: "form-17",
+        question: "What does this represent in the perceptron?\n\n$$f(x) = \\begin{cases} 1, & \\text{if } \\sum w \\cdot x + b \\geq 0 \\\\ 0, & \\text{otherwise} \\end{cases}$$",
+        options: [
+          "The weighted sum",
+          "The activation function (threshold-based)",
+          "The loss function",
+          "The gradient"
+        ],
+        correct: 1,
+        explanation: "This is the binary threshold activation function in a perceptron. It outputs 1 if the weighted sum plus bias is non-negative, otherwise 0."
+      },
+      {
+        id: "form-18",
+        question: "In neural networks, what does $\\delta_j$ (delta) represent in backpropagation?",
+        options: [
+          "The activation value",
+          "The error signal/gradient at node j",
+          "The weight value",
+          "The input value"
+        ],
+        correct: 1,
+        explanation: "Delta (δ) represents the error signal or local gradient at a node during backpropagation. It's used to compute how much each weight should be adjusted."
+      },
+      {
+        id: "form-19",
+        question: "What type of crossover is this?\n\n$$\\text{Child} = \\alpha \\times \\text{parent}_1 + (1-\\alpha) \\times \\text{parent}_2$$",
+        options: [
+          "Single-point crossover",
+          "Uniform crossover",
+          "Whole Arithmetic Crossover",
+          "Cycle crossover"
+        ],
+        correct: 2,
+        explanation: "This is Whole Arithmetic Crossover for real-valued representations in evolutionary algorithms. It creates a weighted average of two parents."
+      },
+      {
+        id: "form-20",
+        question: "What does the derivative of ReLU equal?\n\n$$\\text{ReLU}'(x) = \\text{?}$$",
+        options: [
+          "0 for all x",
+          "1 for x > 0, and 0 for x < 0",
+          "x for all x",
+          "$e^x$"
+        ],
+        correct: 1,
+        explanation: "The derivative of ReLU is 1 when x > 0 (the function is increasing) and 0 when x < 0 (the function is flat). At x = 0, we typically use 0."
+      }
+    ]
   }
 ];
 
@@ -964,9 +1213,9 @@ export const achievements = [
   {
     id: "knowledge_seeker",
     title: "Knowledge Seeker",
-    description: "Complete all 8 topics",
+    description: "Complete all 9 topics",
     icon: "📚",
-    requirement: { type: "topics_completed", value: 8 }
+    requirement: { type: "topics_completed", value: 9 }
   },
   {
     id: "speed_demon",
