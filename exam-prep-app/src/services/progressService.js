@@ -29,11 +29,14 @@ export const getProgress = async (user) => {
         return { ...defaultProgress, ...firestoreData, ...localData };
       }
     } catch (error) {
-      // Only log if it's not an offline error
-      if (error.code !== 'unavailable' && error.code !== 'failed-precondition') {
+      // Only log if it's not an offline error or quota exceeded
+      if (error.code !== 'unavailable' && error.code !== 'failed-precondition' && error.code !== 'resource-exhausted') {
         console.warn('Error reading from Firestore:', error);
       }
-      // Silently fall back to localStorage for offline errors
+      if (error.code === 'resource-exhausted') {
+        console.log('Firestore daily quota exceeded. Using local storage only.');
+      }
+      // Silently fall back to localStorage
     }
   }
 
@@ -55,8 +58,8 @@ export const saveProgress = async (user, progress) => {
         lastUpdated: new Date().toISOString()
       }, { merge: true });
     } catch (error) {
-      // Only log if it's not an offline error
-      if (error.code !== 'unavailable' && error.code !== 'failed-precondition') {
+      // Only log if it's not an offline error or quota exceeded
+      if (error.code !== 'unavailable' && error.code !== 'failed-precondition' && error.code !== 'resource-exhausted') {
         console.warn('Error saving to Firestore:', error);
       }
       // Continue anyway - localStorage is saved
@@ -83,7 +86,10 @@ export const subscribeToProgress = (user, callback) => {
         callback(merged);
       }
     }, (error) => {
-      console.warn('Error listening to Firestore:', error);
+      // Ignore offline/quota errors
+      if (error.code !== 'unavailable' && error.code !== 'resource-exhausted') {
+        console.warn('Error listening to Firestore:', error);
+      }
     });
   } catch (error) {
     console.warn('Error setting up Firestore listener:', error);

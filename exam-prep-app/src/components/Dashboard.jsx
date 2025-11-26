@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { topics } from '../data/curriculum';
+import { getProgress } from '../services/progressService';
 import { Trophy, Target, Flame, TrendingUp, User, LogOut, Users, Shuffle, AlertCircle } from 'lucide-react';
 import './Dashboard.css';
 
@@ -10,8 +12,28 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
 
   // Get other user's data for competition teaser
   const otherUser = currentUser === 'john' ? 'andreas' : 'john';
-  const otherUserData = localStorage.getItem(`examPrepProgress_${otherUser}`);
-  const otherProgress = otherUserData ? JSON.parse(otherUserData) : null;
+  const [otherProgress, setOtherProgress] = useState(() => {
+    const saved = localStorage.getItem(`examPrepProgress_${otherUser}`);
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  useEffect(() => {
+    const loadOtherProgress = async () => {
+      try {
+        // Fetch fresh data from service (which checks Firebase)
+        const freshData = await getProgress(otherUser);
+        if (freshData) {
+          setOtherProgress(freshData);
+          // Update local storage to keep it cached
+          localStorage.setItem(`examPrepProgress_${otherUser}`, JSON.stringify(freshData));
+        }
+      } catch (error) {
+        console.error('Failed to load competitor progress:', error);
+      }
+    };
+
+    loadOtherProgress();
+  }, [otherUser]);
   
   // Calculate knowledge categories
   const strongTopics = topics.filter(t => (progress.topicScores[t.id] || 0) >= 80).length;
