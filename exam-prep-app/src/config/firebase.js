@@ -1,6 +1,6 @@
 // Firebase configuration
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, enableNetwork, disableNetwork } from 'firebase/firestore';
 
 // Your Firebase config
 const firebaseConfig = {
@@ -13,12 +13,19 @@ const firebaseConfig = {
   measurementId: "G-YTNEJHDXZD"
 };
 
-// Initialize Firebase
+// Initialize Firebase (only if not already initialized)
 let app;
 let db;
 
 try {
-  app = initializeApp(firebaseConfig);
+  // Check if Firebase is already initialized (prevents duplicate app error during hot reload)
+  const existingApps = getApps();
+  if (existingApps.length === 0) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = existingApps[0];
+  }
+  
   db = getFirestore(app);
   console.log('✅ Firebase initialized successfully');
 } catch (error) {

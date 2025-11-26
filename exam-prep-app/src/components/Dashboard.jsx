@@ -1,13 +1,25 @@
 import { Link } from 'react-router-dom';
 import { topics } from '../data/curriculum';
-import { Trophy, Target, Flame, TrendingUp, User, LogOut } from 'lucide-react';
+import { Trophy, Target, Flame, TrendingUp, User, LogOut, Users } from 'lucide-react';
 import './Dashboard.css';
 
 function Dashboard({ progress, currentUser, onUserSwitch }) {
   const completedCount = Object.keys(progress.completedTopics).length;
   const completionPercentage = Math.round((completedCount / topics.length) * 100);
-
   const userName = currentUser === 'john' ? 'John' : 'Andreas';
+
+  // Get other user's data for competition teaser
+  const otherUser = currentUser === 'john' ? 'andreas' : 'john';
+  const otherUserData = localStorage.getItem(`examPrepProgress_${otherUser}`);
+  const otherProgress = otherUserData ? JSON.parse(otherUserData) : null;
+  
+  // Calculate knowledge categories
+  const strongTopics = topics.filter(t => (progress.topicScores[t.id] || 0) >= 80).length;
+  const weakTopics = topics.filter(t => {
+    const score = progress.topicScores[t.id];
+    return score !== undefined && score < 60;
+  }).length;
+  const unstartedTopics = topics.filter(t => progress.topicScores[t.id] === undefined).length;
 
   return (
     <div className="dashboard">
@@ -59,6 +71,77 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
       </header>
 
       <div className="dashboard-content">
+        {/* Competition Overview at Top */}
+        {otherProgress && (
+          <div className="competition-overview">
+            <div className="competition-title">
+              <Users size={28} />
+              <h2>Competition</h2>
+            </div>
+            
+            <div className="competition-stats">
+              {/* John's Card */}
+              <div className={`competitor-card ${currentUser === 'john' ? 'current-user' : ''} ${progress.totalPoints > otherProgress.totalPoints ? 'winner' : ''}`}>
+                <div className="competitor-header">
+                  <div className="competitor-avatar">👤</div>
+                  <div className="competitor-info">
+                    <div className="competitor-name">John</div>
+                    {currentUser === 'john' && <span className="you-badge">You</span>}
+                  </div>
+                  {currentUser === 'john' ? progress.totalPoints > otherProgress.totalPoints && <Trophy size={24} className="winner-trophy" /> : otherProgress.totalPoints > progress.totalPoints && <Trophy size={24} className="winner-trophy" />}
+                </div>
+                <div className="competitor-stats">
+                  <div className="comp-stat">
+                    <div className="comp-stat-value">{currentUser === 'john' ? progress.totalPoints : otherProgress.totalPoints}</div>
+                    <div className="comp-stat-label">Points</div>
+                  </div>
+                  <div className="comp-stat">
+                    <div className="comp-stat-value">Lvl {currentUser === 'john' ? progress.level : otherProgress.level}</div>
+                    <div className="comp-stat-label">Level</div>
+                  </div>
+                  <div className="comp-stat">
+                    <div className="comp-stat-value">{currentUser === 'john' ? progress.streak : otherProgress.streak}🔥</div>
+                    <div className="comp-stat-label">Streak</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* VS Badge */}
+              <div className="vs-badge">VS</div>
+
+              {/* Andreas's Card */}
+              <div className={`competitor-card ${currentUser === 'andreas' ? 'current-user' : ''} ${currentUser === 'andreas' ? progress.totalPoints > otherProgress.totalPoints && 'winner' : otherProgress.totalPoints > progress.totalPoints && 'winner'}`}>
+                <div className="competitor-header">
+                  <div className="competitor-avatar">👤</div>
+                  <div className="competitor-info">
+                    <div className="competitor-name">Andreas</div>
+                    {currentUser === 'andreas' && <span className="you-badge">You</span>}
+                  </div>
+                  {currentUser === 'andreas' ? progress.totalPoints > otherProgress.totalPoints && <Trophy size={24} className="winner-trophy" /> : otherProgress.totalPoints > progress.totalPoints && <Trophy size={24} className="winner-trophy" />}
+                </div>
+                <div className="competitor-stats">
+                  <div className="comp-stat">
+                    <div className="comp-stat-value">{currentUser === 'andreas' ? progress.totalPoints : otherProgress.totalPoints}</div>
+                    <div className="comp-stat-label">Points</div>
+                  </div>
+                  <div className="comp-stat">
+                    <div className="comp-stat-value">Lvl {currentUser === 'andreas' ? progress.level : otherProgress.level}</div>
+                    <div className="comp-stat-label">Level</div>
+                  </div>
+                  <div className="comp-stat">
+                    <div className="comp-stat-value">{currentUser === 'andreas' ? progress.streak : otherProgress.streak}🔥</div>
+                    <div className="comp-stat-label">Streak</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Link to="/comparison" className="view-full-comparison">
+              View Full Comparison →
+            </Link>
+          </div>
+        )}
+
         <div className="progress-overview">
           <div className="overview-header">
             <h2>Your Progress</h2>
@@ -78,7 +161,76 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
               {completedCount} of {topics.length} topics completed ({completionPercentage}%)
             </div>
           </div>
+          
+          {/* Quick Knowledge Summary */}
+          <div className="knowledge-summary">
+            <div className="summary-item strong-summary">
+              <div className="summary-icon">✅</div>
+              <div className="summary-text">
+                <div className="summary-count">{strongTopics}</div>
+                <div className="summary-label">Mastered</div>
+              </div>
+            </div>
+            <div className="summary-item weak-summary">
+              <div className="summary-icon">⚠️</div>
+              <div className="summary-text">
+                <div className="summary-count">{weakTopics}</div>
+                <div className="summary-label">Need Work</div>
+              </div>
+            </div>
+            <div className="summary-item unstarted-summary">
+              <div className="summary-icon">🎯</div>
+              <div className="summary-text">
+                <div className="summary-count">{unstartedTopics}</div>
+                <div className="summary-label">Not Started</div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Competition Teaser */}
+        {otherProgress && (
+          <div className="competition-teaser">
+            <div className="teaser-header">
+              <Users size={24} />
+              <h3>Competition Status</h3>
+            </div>
+            <div className="teaser-content">
+              {progress.totalPoints > otherProgress.totalPoints ? (
+                <div className="teaser-status winning">
+                  <div className="teaser-icon">🏆</div>
+                  <div className="teaser-text">
+                    <div className="teaser-main">You're in the lead!</div>
+                    <div className="teaser-sub">
+                      {progress.totalPoints - otherProgress.totalPoints} points ahead of {otherUser === 'john' ? 'John' : 'Andreas'}
+                    </div>
+                  </div>
+                </div>
+              ) : progress.totalPoints < otherProgress.totalPoints ? (
+                <div className="teaser-status losing">
+                  <div className="teaser-icon">💪</div>
+                  <div className="teaser-text">
+                    <div className="teaser-main">You can catch up!</div>
+                    <div className="teaser-sub">
+                      {otherProgress.totalPoints - progress.totalPoints} points behind {otherUser === 'john' ? 'John' : 'Andreas'}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="teaser-status tied">
+                  <div className="teaser-icon">🤝</div>
+                  <div className="teaser-text">
+                    <div className="teaser-main">It's a tie!</div>
+                    <div className="teaser-sub">Both at {progress.totalPoints} points</div>
+                  </div>
+                </div>
+              )}
+              <Link to="/comparison" className="view-comparison-btn">
+                View Full Comparison
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="topics-grid">
           {topics.map(topic => {
@@ -116,9 +268,13 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
         </div>
 
         <div className="quick-links">
+          <Link to="/comparison" className="quick-link competition-link">
+            <Users size={20} />
+            <span>🏆 Competition</span>
+          </Link>
           <Link to="/achievements" className="quick-link">
             <Trophy size={20} />
-            <span>View Achievements</span>
+            <span>Achievements</span>
           </Link>
           <Link to="/progress" className="quick-link">
             <TrendingUp size={20} />

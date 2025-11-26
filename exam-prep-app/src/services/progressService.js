@@ -28,7 +28,11 @@ export const getProgress = async (user) => {
         return { ...defaultProgress, ...firestoreData, ...localData };
       }
     } catch (error) {
-      console.warn('Error reading from Firestore:', error);
+      // Only log if it's not an offline error
+      if (error.code !== 'unavailable' && error.code !== 'failed-precondition') {
+        console.warn('Error reading from Firestore:', error);
+      }
+      // Silently fall back to localStorage for offline errors
     }
   }
 
@@ -50,7 +54,10 @@ export const saveProgress = async (user, progress) => {
         lastUpdated: new Date().toISOString()
       }, { merge: true });
     } catch (error) {
-      console.warn('Error saving to Firestore:', error);
+      // Only log if it's not an offline error
+      if (error.code !== 'unavailable' && error.code !== 'failed-precondition') {
+        console.warn('Error saving to Firestore:', error);
+      }
       // Continue anyway - localStorage is saved
     }
   }

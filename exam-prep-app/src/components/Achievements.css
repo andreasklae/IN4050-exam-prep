@@ -128,6 +128,7 @@
   font-size: 20px;
   font-weight: 700;
   margin-bottom: 8px;
+  color: var(--text);
 }
 
 .achievement-description {

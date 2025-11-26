@@ -11,6 +11,12 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: #f1f5f9; /* Default white text */
+}
+
+/* Ensure all text elements default to white */
+h1, h2, h3, h4, h5, h6, p, span, div, a, button, label, input, textarea, select {
+  color: inherit;
 }
 
 code {

@@ -13,6 +13,18 @@ function Progress({ progress, currentUser, onUserSwitch }) {
     ? Math.round(Object.values(progress.topicScores).reduce((a, b) => a + b, 0) / Object.keys(progress.topicScores).length)
     : 0;
 
+  // Categorize topics by performance
+  const strongTopics = topics.filter(t => (progress.topicScores[t.id] || 0) >= 80);
+  const mediumTopics = topics.filter(t => {
+    const score = progress.topicScores[t.id] || 0;
+    return score >= 60 && score < 80;
+  });
+  const weakTopics = topics.filter(t => {
+    const score = progress.topicScores[t.id];
+    return score !== undefined && score < 60;
+  });
+  const unstartedTopics = topics.filter(t => progress.topicScores[t.id] === undefined);
+
   return (
     <div className="progress-page">
       <header className="page-header">
@@ -135,6 +147,93 @@ function Progress({ progress, currentUser, onUserSwitch }) {
                 <div className="insight-tip">
                   {progress.totalPoints % 100} points until next level
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Knowledge Overview */}
+        <div className="knowledge-overview">
+          <h2>What You Know vs. Don't Know</h2>
+          
+          <div className="knowledge-grid">
+            {/* Strong Topics */}
+            <div className="knowledge-section strong-section">
+              <div className="knowledge-header">
+                <span className="knowledge-icon">✅</span>
+                <h3>Mastered ({strongTopics.length})</h3>
+              </div>
+              <div className="knowledge-desc">80%+ Score - You know this well!</div>
+              <div className="topic-chips">
+                {strongTopics.length > 0 ? strongTopics.map(topic => (
+                  <div key={topic.id} className="topic-chip strong-chip">
+                    <span>{topic.icon}</span>
+                    <span>{topic.title}</span>
+                    <span className="chip-score">{progress.topicScores[topic.id]}%</span>
+                  </div>
+                )) : (
+                  <div className="empty-state">No topics mastered yet. Aim for 80%+!</div>
+                )}
+              </div>
+            </div>
+
+            {/* Medium Topics */}
+            <div className="knowledge-section medium-section">
+              <div className="knowledge-header">
+                <span className="knowledge-icon">📚</span>
+                <h3>Learning ({mediumTopics.length})</h3>
+              </div>
+              <div className="knowledge-desc">60-79% Score - Getting there!</div>
+              <div className="topic-chips">
+                {mediumTopics.length > 0 ? mediumTopics.map(topic => (
+                  <div key={topic.id} className="topic-chip medium-chip">
+                    <span>{topic.icon}</span>
+                    <span>{topic.title}</span>
+                    <span className="chip-score">{progress.topicScores[topic.id]}%</span>
+                  </div>
+                )) : (
+                  <div className="empty-state">No topics in progress</div>
+                )}
+              </div>
+            </div>
+
+            {/* Weak Topics */}
+            <div className="knowledge-section weak-section">
+              <div className="knowledge-header">
+                <span className="knowledge-icon">⚠️</span>
+                <h3>Needs Work ({weakTopics.length})</h3>
+              </div>
+              <div className="knowledge-desc">Below 60% - Focus here!</div>
+              <div className="topic-chips">
+                {weakTopics.length > 0 ? weakTopics.map(topic => (
+                  <div key={topic.id} className="topic-chip weak-chip" onClick={() => navigate(`/quiz/${topic.id}`)}>
+                    <span>{topic.icon}</span>
+                    <span>{topic.title}</span>
+                    <span className="chip-score">{progress.topicScores[topic.id]}%</span>
+                  </div>
+                )) : (
+                  <div className="empty-state">Great! No weak topics</div>
+                )}
+              </div>
+            </div>
+
+            {/* Unstarted Topics */}
+            <div className="knowledge-section unstarted-section">
+              <div className="knowledge-header">
+                <span className="knowledge-icon">🎯</span>
+                <h3>Not Started ({unstartedTopics.length})</h3>
+              </div>
+              <div className="knowledge-desc">Begin your journey!</div>
+              <div className="topic-chips">
+                {unstartedTopics.length > 0 ? unstartedTopics.map(topic => (
+                  <div key={topic.id} className="topic-chip unstarted-chip" onClick={() => navigate(`/quiz/${topic.id}`)}>
+                    <span>{topic.icon}</span>
+                    <span>{topic.title}</span>
+                    <span className="chip-new">NEW</span>
+                  </div>
+                )) : (
+                  <div className="empty-state">All topics started!</div>
+                )}
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import Quiz from './components/Quiz';
 import Progress from './components/Progress';
 import Achievements from './components/Achievements';
+import Comparison from './components/Comparison';
 import UserSelector from './components/UserSelector';
 import { getProgress, saveProgress, subscribeToProgress } from './services/progressService';
 import './App.css';
@@ -17,26 +18,34 @@ function App() {
   const [progress, setProgress] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const unsubscribeRef = useRef(null);
+  const savingRef = useRef(false);
+  const initialLoadRef = useRef(false);
 
   // Load progress when user changes
   useEffect(() => {
     if (!currentUser) {
       setProgress(null);
       setIsLoading(false);
+      initialLoadRef.current = false;
       return;
     }
 
     setIsLoading(true);
+    initialLoadRef.current = true;
     
     // Load initial progress from Firestore/localStorage
     getProgress(currentUser).then((loadedProgress) => {
       setProgress(loadedProgress);
       setIsLoading(false);
+      initialLoadRef.current = false;
     });
 
     // Set up real-time sync
     unsubscribeRef.current = subscribeToProgress(currentUser, (syncedProgress) => {
-      setProgress(syncedProgress);
+      // Only update if we're not currently saving (prevents loops)
+      if (!savingRef.current) {
+        setProgress(syncedProgress);
+      }
     });
 
     // Cleanup subscription on unmount or user change
@@ -48,16 +57,20 @@ function App() {
     };
   }, [currentUser]);
 
-  // Save progress to Firestore whenever it changes
+  // Save progress to Firestore whenever it changes (but not during initial load)
   useEffect(() => {
-    if (currentUser && progress && !isLoading) {
-      saveProgress(currentUser, progress);
+    if (currentUser && progress && !isLoading && !initialLoadRef.current) {
+      savingRef.current = true;
+      saveProgress(currentUser, progress).finally(() => {
+        savingRef.current = false;
+      });
     }
   }, [progress, currentUser, isLoading]);
 
-  // Update streak when app loads
+  // Update streak when app loads (only once, not on every progress change)
   useEffect(() => {
-    if (!progress) return;
+    if (!progress || isLoading) return;
+    
     const today = new Date().toDateString();
     const lastDate = progress.lastStudyDate;
     
@@ -66,16 +79,14 @@ function App() {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       
-      if (lastDate === today) {
-        // Already studied today
-      } else if (last.toDateString() === yesterday.toDateString()) {
-        // Studied yesterday, continue streak
-      } else {
-        // Streak broken
-        setProgress(prev => ({ ...prev, streak: 0 }));
+      if (lastDate !== today && last.toDateString() !== yesterday.toDateString()) {
+        // Streak broken - update only if needed
+        if (progress.streak !== 0) {
+          setProgress(prev => ({ ...prev, streak: 0 }));
+        }
       }
     }
-  }, [progress]);
+  }, [progress?.lastStudyDate, isLoading]); // Only depend on lastStudyDate, not entire progress
 
   const updateProgress = (updates) => {
     setProgress(prev => {
@@ -144,6 +155,7 @@ function App() {
           <Route path="/quiz/:topicId" element={<Quiz progress={progress} updateProgress={updateProgress} currentUser={currentUser} />} />
           <Route path="/progress" element={<Progress progress={progress} currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
           <Route path="/achievements" element={<Achievements progress={progress} currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
+          <Route path="/comparison" element={<Comparison currentUser={currentUser} onUserSwitch={handleUserSwitch} />} />
         </Routes>
       </div>
     </Router>

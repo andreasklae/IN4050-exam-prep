@@ -54,6 +54,7 @@
   font-weight: 700;
   margin-bottom: 32px;
   line-height: 1.4;
+  color: var(--text);
   animation: slideIn 0.4s ease;
 }
 
@@ -118,6 +119,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 18px;
+  color: var(--text);
   flex-shrink: 0;
 }
 
@@ -140,6 +142,7 @@
   flex: 1;
   font-size: 16px;
   line-height: 1.5;
+  color: var(--text);
 }
 
 .option-icon {
@@ -235,6 +238,7 @@
   font-size: 36px;
   font-weight: 800;
   margin-bottom: 8px;
+  color: var(--text);
 }
 
 .topic-name {
@@ -301,6 +305,7 @@
   font-size: 24px;
   font-weight: 700;
   margin-bottom: 4px;
+  color: var(--text);
 }
 
 .stat-label {
@@ -320,6 +325,7 @@
 .new-achievements h3 {
   font-size: 20px;
   margin-bottom: 16px;
+  color: var(--text);
 }
 
 .achievement-list {
@@ -336,6 +342,7 @@
   align-items: center;
   gap: 12px;
   font-weight: 600;
+  color: var(--text);
 }
 
 .achievement-icon {

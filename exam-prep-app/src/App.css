@@ -112,6 +112,7 @@ body {
   font-size: 28px;
   font-weight: 700;
   flex: 1;
+  color: var(--text);
 }
 
 .switch-user-btn-header {
