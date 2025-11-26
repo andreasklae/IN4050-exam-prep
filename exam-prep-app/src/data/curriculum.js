@@ -126,15 +126,15 @@ export const topics = [
       },
       {
         id: "opt-2",
-        question: "What does the gradient ∇f(x) represent in optimization?",
+        question: "What does the gradient $\\nabla f(x)$ represent in optimization?",
         options: [
           "The minimum value of the function",
-          "The direction in which f(x) increases the most",
+          "The direction in which $f(x)$ increases the most",
           "The rate at which the function decreases",
           "The optimal solution"
         ],
         correct: 1,
-        explanation: "The gradient ∇f(x) indicates the direction in which f(x) increases the most, used in gradient ascent/descent algorithms."
+        explanation: "The gradient $\\nabla f(x)$ indicates the direction in which $f(x)$ increases the most, used in gradient ascent/descent algorithms."
       },
       {
         id: "opt-3",
@@ -162,15 +162,15 @@ export const topics = [
       },
       {
         id: "opt-5",
-        question: "In gradient descent, what is the update rule for x?",
+        question: "In gradient descent, what is the update rule for $x$?",
         options: [
-          "x^(k+1) = x^(k) + γ∇f(x^(k))",
-          "x^(k+1) = x^(k) - γ∇f(x^(k))",
-          "x^(k+1) = γ∇f(x^(k))",
-          "x^(k+1) = x^(k) * ∇f(x^(k))"
+          "$x^{(k+1)} = x^{(k)} + \\gamma \\nabla f(x^{(k)})$",
+          "$x^{(k+1)} = x^{(k)} - \\gamma \\nabla f(x^{(k)})$",
+          "$x^{(k+1)} = \\gamma \\nabla f(x^{(k)})$",
+          "$x^{(k+1)} = x^{(k)} \\times \\nabla f(x^{(k)})$"
         ],
         correct: 1,
-        explanation: "For gradient descent (minimization), the update rule is x^(k+1) = x^(k) - γ∇f(x^(k)), where γ is the learning rate. For ascent, we add instead of subtract."
+        explanation: "For gradient descent (minimization), the update rule is $x^{(k+1)} = x^{(k)} - \\gamma \\nabla f(x^{(k)})$, where $\\gamma$ is the learning rate. For ascent, we add instead of subtract."
       },
       {
         id: "opt-6",
@@ -201,12 +201,12 @@ export const topics = [
         question: "What parameter controls the step size in gradient descent?",
         options: [
           "The gradient",
-          "The learning rate (γ)",
+          "The learning rate ($\\gamma$)",
           "The momentum",
           "The temperature"
         ],
         correct: 1,
-        explanation: "The learning rate (γ) controls the step size in gradient descent, determining how far we move in the direction of the gradient."
+        explanation: "The learning rate ($\\gamma$) controls the step size in gradient descent, determining how far we move in the direction of the gradient."
       }
     ]
   },
@@ -227,7 +227,7 @@ export const topics = [
           "No data is needed"
         ],
         correct: 1,
-        explanation: "Supervised learning uses labeled data where each input x has a corresponding label y, and the goal is to learn the mapping f: x → y."
+        explanation: "Supervised learning uses labeled data where each input $x$ has a corresponding label $y$, and the goal is to learn the mapping $f: x \\to y$."
       },
       {
         id: "ml-2",
@@ -270,12 +270,12 @@ export const topics = [
         question: "What is a feature vector in machine learning?",
         options: [
           "A vector pointing in the direction of optimization",
-          "A numerical representation of an object's attributes (x₁, x₂, ..., xₘ)",
+          "A numerical representation of an object's attributes ($x_1, x_2, \\ldots, x_m$)",
           "The output of a classifier",
           "A vector of labels"
         ],
         correct: 1,
-        explanation: "A feature vector is a numerical representation of an object's attributes, written as x = (x₁, x₂, ..., xₘ), used to transform prediction tasks into mathematical operations."
+        explanation: "A feature vector is a numerical representation of an object's attributes, written as $x = (x_1, x_2, \\ldots, x_m)$, used to transform prediction tasks into mathematical operations."
       },
       {
         id: "ml-6",
@@ -332,7 +332,7 @@ export const topics = [
           "The derivative of the loss function"
         ],
         correct: 1,
-        explanation: "A perceptron computes a weighted sum of inputs (z = b + Σwᵢxᵢ) and applies a binary, threshold-based activation function to determine the output (0 or 1)."
+        explanation: "A perceptron computes a weighted sum of inputs ($z = b + \\sum w_i x_i$) and applies a binary, threshold-based activation function to determine the output (0 or 1)."
       },
       {
         id: "lin-2",
@@ -344,7 +344,7 @@ export const topics = [
           "KL Divergence"
         ],
         correct: 1,
-        explanation: "Linear regression seeks to minimize the Mean Squared Error (MSE) loss function: (1/N)Σ(tⱼ - Σwᵢxⱼ,ᵢ)²."
+        explanation: "Linear regression seeks to minimize the Mean Squared Error (MSE) loss function: $\\frac{1}{N}\\sum(t_j - \\sum w_i x_{j,i})^2$."
       },
       {
         id: "lin-3",
@@ -386,13 +386,13 @@ export const topics = [
         id: "lin-6",
         question: "What is the formula for the Softmax function?",
         options: [
-          "yⱼ = zⱼ / Σzₖ",
-          "yⱼ = e^zⱼ / Σe^zₖ",
-          "yⱼ = max(zⱼ)",
-          "yⱼ = log(zⱼ)"
+          "$y_j = z_j / \\sum z_k$",
+          "$y_j = \\frac{e^{z_j}}{\\sum e^{z_k}}$",
+          "$y_j = \\max(z_j)$",
+          "$y_j = \\log(z_j)$"
         ],
         correct: 1,
-        explanation: "The Softmax function is defined as yⱼ = e^zⱼ / Σₖe^zₖ, which normalizes exponentials of the inputs to create a probability distribution."
+        explanation: "The Softmax function is defined as $y_j = \\frac{e^{z_j}}{\\sum_k e^{z_k}}$, which normalizes exponentials of the inputs to create a probability distribution."
       },
       {
         id: "lin-7",
@@ -416,7 +416,7 @@ export const topics = [
           "It doesn't require calculus"
         ],
         correct: 1,
-        explanation: "While a closed-form solution exists for linear regression, it is computationally complex for high dimensions (O(m³)), making gradient descent the preferred method for training."
+        explanation: "While a closed-form solution exists for linear regression, it is computationally complex for high dimensions ($O(m^3)$), making gradient descent the preferred method for training."
       }
     ]
   },
@@ -449,7 +449,7 @@ export const topics = [
           "Step function"
         ],
         correct: 2,
-        explanation: "The Rectified Linear Unit (ReLU), defined as ReLU(x) = max(x, 0), is the preferred activation function in deep networks due to its computational advantages."
+        explanation: "The Rectified Linear Unit (ReLU), defined as $\\text{ReLU}(x) = \\max(x, 0)$, is the preferred activation function in deep networks due to its computational advantages."
       },
       {
         id: "dl-3",
@@ -513,15 +513,15 @@ export const topics = [
       },
       {
         id: "dl-8",
-        question: "What is the current state (hₜ) in an RNN determined by?",
+        question: "What is the current state ($h_t$) in an RNN determined by?",
         options: [
-          "Only the current input (xₜ)",
-          "Only the previous state (hₜ₋₁)",
-          "Both the current input (xₜ) and previous state (hₜ₋₁)",
+          "Only the current input ($x_t$)",
+          "Only the previous state ($h_{t-1}$)",
+          "Both the current input ($x_t$) and previous state ($h_{t-1}$)",
           "The final output"
         ],
         correct: 2,
-        explanation: "In RNNs, the current state hₜ is determined by both the current input xₜ and the state hₜ₋₁ at time t-1, allowing the network to maintain temporal dependencies."
+        explanation: "In RNNs, the current state $h_t$ is determined by both the current input $x_t$ and the state $h_{t-1}$ at time $t-1$, allowing the network to maintain temporal dependencies."
       },
       {
         id: "dl-9",
@@ -726,24 +726,24 @@ export const topics = [
         question: "What does Precision measure?",
         options: [
           "Percentage of actual positives found",
-          "Accuracy of positive predictions: TP / (TP + FP)",
+          "Accuracy of positive predictions: $\\frac{TP}{TP + FP}$",
           "Overall accuracy",
           "True negative rate"
         ],
         correct: 1,
-        explanation: "Precision measures the accuracy of positive predictions: TP / (TP + FP). It focuses on minimizing False Positives."
+        explanation: "Precision measures the accuracy of positive predictions: $\\frac{TP}{TP + FP}$. It focuses on minimizing False Positives."
       },
       {
         id: "eval-5",
         question: "What does Recall (Sensitivity) measure?",
         options: [
           "Accuracy of positive predictions",
-          "Percentage of actual positives found: TP / (TP + FN)",
+          "Percentage of actual positives found: $\\frac{TP}{TP + FN}$",
           "Overall accuracy",
           "True negative rate"
         ],
         correct: 1,
-        explanation: "Recall (Sensitivity or True Positive Rate) measures the percentage of actual positives that were correctly identified: TP / (TP + FN). It focuses on minimizing False Negatives."
+        explanation: "Recall (Sensitivity or True Positive Rate) measures the percentage of actual positives that were correctly identified: $\\frac{TP}{TP + FN}$. It focuses on minimizing False Negatives."
       },
       {
         id: "eval-6",

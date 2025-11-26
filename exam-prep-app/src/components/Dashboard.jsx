@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { topics } from '../data/curriculum';
 import { getProgress } from '../services/progressService';
-import { Trophy, Target, Flame, TrendingUp, User, LogOut, Users, Shuffle, AlertCircle } from 'lucide-react';
+import { Trophy, Target, Flame, TrendingUp, User, LogOut, Users, Shuffle, AlertCircle, PlayCircle } from 'lucide-react';
 import './Dashboard.css';
 
 function Dashboard({ progress, currentUser, onUserSwitch }) {
@@ -19,6 +19,14 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
 
   useEffect(() => {
     const loadOtherProgress = async () => {
+      const lastFetch = localStorage.getItem(`lastFetch_${otherUser}`);
+      const now = Date.now();
+      
+      // Only fetch if we haven't fetched in the last 5 minutes (300000ms)
+      if (lastFetch && (now - parseInt(lastFetch)) < 300000) {
+        return;
+      }
+
       try {
         // Fetch fresh data from service (which checks Firebase)
         const freshData = await getProgress(otherUser);
@@ -26,6 +34,7 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
           setOtherProgress(freshData);
           // Update local storage to keep it cached
           localStorage.setItem(`examPrepProgress_${otherUser}`, JSON.stringify(freshData));
+          localStorage.setItem(`lastFetch_${otherUser}`, now.toString());
         }
       } catch (error) {
         console.error('Failed to load competitor progress:', error);
@@ -42,6 +51,42 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
     return score !== undefined && score < 60;
   }).length;
   const unstartedTopics = topics.filter(t => progress.topicScores[t.id] === undefined).length;
+
+  // Check for unfinished quizzes
+  const activeQuizzes = progress.activeQuizzes || {};
+  const lastActiveQuizKey = Object.keys(activeQuizzes).sort((a, b) => {
+    return (activeQuizzes[b].lastUpdated || 0) - (activeQuizzes[a].lastUpdated || 0);
+  })[0];
+
+  let resumeQuizLink = null;
+  let resumeQuizTitle = "";
+  let resumeQuizSubtitle = "Continue where you left off";
+
+  if (lastActiveQuizKey) {
+    const quizData = activeQuizzes[lastActiveQuizKey];
+    const answeredCount = (quizData.answers || []).length;
+    const totalCount = (quizData.questions || []).length;
+    
+    // Only show resume if not completed (though completed should be removed by Quiz component)
+    if (answeredCount < totalCount) {
+      resumeQuizSubtitle = `${answeredCount} of ${totalCount} questions answered`;
+
+      if (lastActiveQuizKey === 'random') {
+        resumeQuizLink = '/random';
+        resumeQuizTitle = 'Random Quiz';
+      } else if (lastActiveQuizKey === 'mistakes') {
+        resumeQuizLink = '/mistakes';
+        resumeQuizTitle = 'Mistakes Review';
+      } else if (lastActiveQuizKey.startsWith('topic_')) {
+        const topicId = parseInt(lastActiveQuizKey.split('_')[1]);
+        const topic = topics.find(t => t.id === topicId);
+        if (topic) {
+          resumeQuizLink = `/quiz/${topicId}`;
+          resumeQuizTitle = topic.title;
+        }
+      }
+    }
+  }
 
   return (
     <div className="dashboard">
@@ -210,6 +255,22 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
           </div>
         </div>
 
+        {/* Resume Unfinished Quiz */}
+        {resumeQuizLink && (
+          <div className="resume-section">
+            <Link to={resumeQuizLink} className="resume-card">
+              <div className="resume-icon">
+                <PlayCircle size={28} />
+              </div>
+              <div className="resume-content">
+                <h3>Resume: {resumeQuizTitle}</h3>
+                <p>{resumeQuizSubtitle}</p>
+              </div>
+              <div className="resume-arrow">→</div>
+            </Link>
+          </div>
+        )}
+
         {/* Competition Teaser */}
         {otherProgress && (
           <div className="competition-teaser">
@@ -332,4 +393,3 @@ function Dashboard({ progress, currentUser, onUserSwitch }) {
 }
 
 export default Dashboard;
-

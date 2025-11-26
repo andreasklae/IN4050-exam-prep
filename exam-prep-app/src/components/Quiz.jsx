@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { topics, achievements } from '../data/curriculum';
 import { CheckCircle, XCircle, ArrowLeft, ArrowRight, Home, Save } from 'lucide-react';
@@ -6,10 +6,23 @@ import { InlineMath, BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import './Quiz.css';
 
+// Helper to shuffle array
+const shuffleArray = (array) => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
 function Quiz({ mode, progress, updateProgress }) {
   const { topicId } = useParams();
   const navigate = useNavigate();
   
+  // Generate a unique ID for this quiz session context
+  const quizContextId = mode || `topic_${topicId}`;
+
   // State
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -19,98 +32,164 @@ function Quiz({ mode, progress, updateProgress }) {
   const [quizComplete, setQuizComplete] = useState(false);
   const [startTime] = useState(Date.now());
   const [quizTopic, setQuizTopic] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize quiz based on mode
+  // Initialize or Resume Quiz
   useEffect(() => {
-    if (mode === 'random') {
-      // Random Quiz: Select 15 random questions from all topics
-      const allQuestions = topics.flatMap(t => t.questions.map(q => ({ ...q, topicId: t.id })));
-      const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
-      setQuestions(shuffled.slice(0, 15));
-      setQuizTopic({
-        title: "Random Quiz",
-        icon: "🎲",
-        color: "#10b981"
-      });
-    } else if (mode === 'mistakes') {
-      // Mistakes Review: Load incorrect questions
-      const incorrectIds = progress.incorrectQuestions || [];
-      
-      if (incorrectIds.length === 0) {
-        setQuestions([]); // Will trigger empty state
-      } else {
-        const mistakesList = [];
-        // Find question objects for the stored IDs
-        incorrectIds.forEach(item => {
-          const topic = topics.find(t => t.id === item.topicId);
-          if (topic) {
-            const question = topic.questions.find(q => q.id === item.questionId);
-            if (question) {
-              mistakesList.push({ ...question, topicId: topic.id });
+    const initializeQuiz = () => {
+      let rawQuestions = [];
+      let topicData = null;
+
+      // 1. Determine Source Questions & Topic Data
+      if (mode === 'random') {
+        const allQuestions = topics.flatMap(t => t.questions.map(q => ({ ...q, topicId: t.id })));
+        rawQuestions = shuffleArray(allQuestions).slice(0, 15);
+        topicData = { title: "Random Quiz", icon: "🎲", color: "#10b981", id: "random" };
+      } else if (mode === 'mistakes') {
+        const incorrectIds = progress.incorrectQuestions || [];
+        if (incorrectIds.length > 0) {
+          incorrectIds.forEach(item => {
+            const t = topics.find(top => top.id === item.topicId);
+            if (t) {
+              const q = t.questions.find(ques => ques.id === item.questionId);
+              if (q) rawQuestions.push({ ...q, topicId: t.id });
             }
-          }
-        });
-        setQuestions(mistakesList);
+          });
+        }
+        topicData = { title: "Mistakes Review", icon: "⚠️", color: "#f97316", id: "mistakes" };
+      } else {
+        const t = topics.find(top => top.id === parseInt(topicId));
+        if (t) {
+          rawQuestions = [...t.questions].map(q => ({ ...q, topicId: t.id }));
+          topicData = t;
+        }
       }
+
+      if (!topicData) {
+        setIsLoading(false);
+        return; 
+      }
+      setQuizTopic(topicData);
+
+      // 2. Check for Active Session to Resume
+      // Only resume if NOT mistakes mode (mistakes should probably be fresh/dynamic)
+      // Actually, resuming mistakes is fine too.
+      const savedSession = progress.activeQuizzes?.[quizContextId];
+
+      if (savedSession && savedSession.questions && savedSession.questions.length > 0) {
+        // Restore session
+        setQuestions(savedSession.questions);
+        setCurrentQuestionIndex(savedSession.currentQuestionIndex || 0);
+        setAnswers(savedSession.answers || []);
+      } else {
+        // Start New Session
+        if (rawQuestions.length > 0) {
+          // Shuffle questions order (unless it's topic mode where user might expect order, but user requested random)
+          // User asked for randomization of questions AND options.
+          const shuffledQuestions = shuffleArray(rawQuestions).map(q => {
+            // Create shuffled options with mapping to original index
+            const optionsWithIndex = q.options.map((opt, idx) => ({ text: opt, originalIndex: idx }));
+            const shuffledOptions = shuffleArray(optionsWithIndex);
+            return {
+              ...q,
+              shuffledOptions // Store this structure to use for rendering
+            };
+          });
+          setQuestions(shuffledQuestions);
+        } else {
+          setQuestions([]);
+        }
+        setCurrentQuestionIndex(0);
+        setAnswers([]);
+      }
+      setIsLoading(false);
+    };
+
+    initializeQuiz();
+  }, [quizContextId, mode, topicId, progress.activeQuizzes, progress.incorrectQuestions]);
+
+  // Save state when leaving component (unmount) is tricky with React Router.
+  // Instead, we update the active session in progress on every significant state change.
+  useEffect(() => {
+    if (!isLoading && questions.length > 0 && !quizComplete) {
+      const activeQuizzes = { ...(progress.activeQuizzes || {}) };
+      activeQuizzes[quizContextId] = {
+        questions, // Stores the specific shuffled order and options
+        currentQuestionIndex,
+        answers,
+        lastUpdated: Date.now()
+      };
       
-      setQuizTopic({
-        title: "Mistakes Review",
-        icon: "⚠️",
-        color: "#f97316"
-      });
-    } else {
-      // Normal Topic Quiz
-      const topic = topics.find(t => t.id === parseInt(topicId));
-      if (topic) {
-        setQuestions(topic.questions.map(q => ({ ...q, topicId: topic.id })));
-        setQuizTopic(topic);
-      }
+      // We need to be careful not to trigger infinite loops.
+      // This effect runs when index or answers change.
+      // We only call updateProgress if data actually changed significantly? 
+      // Actually, updateProgress in App.jsx is state-based, so calling it is fine, 
+      // but we should debounce or check if it's different.
+      // For now, let's rely on the fact that user action triggers these changes.
+      // BUT: We cannot call updateProgress inside render loop or simple effect easily without risk.
+      // Best approach: Update progress only when handling user actions (answer, next).
     }
-  }, [mode, topicId, progress.incorrectQuestions]);
+  }, [/* Intentionally empty to not auto-save on render */]);
 
   // Helper function to render text with LaTeX formulas
   const renderMathText = (text) => {
     if (!text) return null;
     
     const parts = [];
-    let remaining = text;
+    let remaining = text.trim();
     let key = 0;
     
     while (remaining.length > 0) {
+      // Try to match block math first ($$...$$)
       const blockMatch = remaining.match(/^\$\$([\s\S]+?)\$\$/);
       if (blockMatch) {
         parts.push(<BlockMath key={key++} math={blockMatch[1].trim()} />);
-        remaining = remaining.slice(blockMatch[0].length);
+        remaining = remaining.slice(blockMatch[0].length).trim();
         continue;
       }
       
-      const inlineMatch = remaining.match(/^\$([^$]+?)\$/);
+      // Try to match inline math ($...$)
+      // Use a more permissive pattern that handles the entire string if it's just a formula
+      const inlineMatch = remaining.match(/^\$([^$\n]+?)\$/);
       if (inlineMatch) {
-        parts.push(<InlineMath key={key++} math={inlineMatch[1]} />);
-        remaining = remaining.slice(inlineMatch[0].length);
+        parts.push(<InlineMath key={key++} math={inlineMatch[1].trim()} />);
+        remaining = remaining.slice(inlineMatch[0].length).trim();
         continue;
       }
       
-      const nextDollar = remaining.search(/\$/);
-      const textEnd = nextDollar === -1 ? remaining.length : nextDollar;
-      if (textEnd > 0) {
-        const textPart = remaining.slice(0, textEnd);
+      // If no math found, look for the next dollar sign or end of string
+      const nextDollar = remaining.indexOf('$');
+      if (nextDollar === -1) {
+        // No more dollar signs, add remaining text
+        if (remaining.length > 0) {
+          remaining.split('\n').forEach((line, i) => {
+            if (i > 0) parts.push(<br key={`br-${key++}`} />);
+            if (line.trim()) parts.push(<span key={key++}>{line}</span>);
+          });
+        }
+        break;
+      } else if (nextDollar > 0) {
+        // There's text before the next dollar sign
+        const textPart = remaining.slice(0, nextDollar);
         textPart.split('\n').forEach((line, i) => {
           if (i > 0) parts.push(<br key={`br-${key++}`} />);
-          if (line) parts.push(<span key={key++}>{line}</span>);
+          if (line.trim()) parts.push(<span key={key++}>{line}</span>);
         });
-        remaining = remaining.slice(textEnd);
+        remaining = remaining.slice(nextDollar);
       } else {
-        break;
+        // Dollar sign at start but no match - skip it and continue
+        parts.push(<span key={key++}>$</span>);
+        remaining = remaining.slice(1);
       }
     }
     
     return <>{parts}</>;
   };
 
-  if (!quizTopic) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading quiz...</div>;
+  if (!quizTopic) return <div>Topic not found</div>;
 
-  // Handle empty state for mistakes mode
+  // Empty state for mistakes
   if (questions.length === 0 && mode === 'mistakes') {
     return (
       <div className="quiz-complete">
@@ -129,40 +208,71 @@ function Quiz({ mode, progress, updateProgress }) {
     );
   }
 
-  if (questions.length === 0) return <div>Topic not found</div>;
+  if (questions.length === 0) return <div>No questions found.</div>;
 
   const currentQuestion = questions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
-  const handleAnswerSelect = (index) => {
+  // Save Progress Helper
+  const saveCurrentProgress = (newAnswers = answers, newIndex = currentQuestionIndex) => {
+    const activeQuizzes = { ...(progress.activeQuizzes || {}) };
+    activeQuizzes[quizContextId] = {
+      questions,
+      currentQuestionIndex: newIndex,
+      answers: newAnswers,
+      lastUpdated: Date.now()
+    };
+    updateProgress({ activeQuizzes });
+  };
+
+  const clearActiveQuiz = () => {
+    const activeQuizzes = { ...(progress.activeQuizzes || {}) };
+    delete activeQuizzes[quizContextId];
+    // We don't update progress here immediately to avoid race conditions with final stats,
+    // but completeQuiz handles the final update.
+    return activeQuizzes;
+  };
+
+  const handleAnswerSelect = (shuffledIndex) => {
     if (showExplanation) return;
-    setSelectedAnswer(index);
+    setSelectedAnswer(shuffledIndex);
   };
 
   const handleSubmitAnswer = () => {
     if (selectedAnswer === null) return;
     
     setShowExplanation(true);
-    const isCorrect = selectedAnswer === currentQuestion.correct;
-    setAnswers([...answers, { questionId: currentQuestion.id, correct: isCorrect }]);
+    // Map shuffled index back to original index to check correctness
+    const selectedOptionObj = currentQuestion.shuffledOptions[selectedAnswer];
+    const isCorrect = selectedOptionObj.originalIndex === currentQuestion.correct;
+    
+    const newAnswers = [...answers, { questionId: currentQuestion.id, correct: isCorrect }];
+    setAnswers(newAnswers);
 
     // Update incorrect questions list immediately
     let newIncorrect = [...(progress.incorrectQuestions || [])];
     const questionRef = { topicId: currentQuestion.topicId, questionId: currentQuestion.id };
     
     if (!isCorrect) {
-      // Add to mistakes if not already there
       if (!newIncorrect.some(q => q.questionId === questionRef.questionId)) {
         newIncorrect.push(questionRef);
       }
     } else {
-      // Remove from mistakes if correct
       newIncorrect = newIncorrect.filter(q => q.questionId !== questionRef.questionId);
     }
 
-    // Update progress immediately for this question result
+    // Update progress immediately (persists active state + mistakes)
+    const activeQuizzes = { ...(progress.activeQuizzes || {}) };
+    activeQuizzes[quizContextId] = {
+      questions,
+      currentQuestionIndex,
+      answers: newAnswers,
+      lastUpdated: Date.now()
+    };
+
     updateProgress({
-      incorrectQuestions: newIncorrect
+      incorrectQuestions: newIncorrect,
+      activeQuizzes
     });
   };
 
@@ -170,59 +280,57 @@ function Quiz({ mode, progress, updateProgress }) {
     if (isLastQuestion) {
       completeQuiz();
     } else {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
       setSelectedAnswer(null);
       setShowExplanation(false);
+      
+      // Save progress (position update)
+      saveCurrentProgress(answers, nextIndex);
     }
   };
 
   const handleExit = () => {
-    // Save any progress made so far is already handled by handleSubmitAnswer
+    // Progress is already saved on submit/next.
     navigate('/');
   };
 
   const completeQuiz = () => {
     const correctCount = answers.filter(a => a.correct).length + 
-                        (selectedAnswer === currentQuestion.correct ? 1 : 0);
+                        (selectedAnswer !== null && 
+                         currentQuestion.shuffledOptions[selectedAnswer].originalIndex === currentQuestion.correct ? 1 : 0);
+    
     const totalQuestions = questions.length;
     const scorePercentage = Math.round((correctCount / totalQuestions) * 100);
     const timeSpent = Math.round((Date.now() - startTime) / 1000);
     
-    // Calculate points
+    // Points
     const basePoints = correctCount * 10;
     const bonusPoints = scorePercentage >= 80 ? 20 : scorePercentage >= 60 ? 10 : 0;
     const speedBonus = timeSpent < 120 ? 15 : 0;
     const totalPoints = basePoints + bonusPoints + speedBonus;
     
-    // Streak logic
+    // Streak
     const today = new Date().toDateString();
     const lastDate = progress.lastStudyDate;
     let newStreak = progress.streak;
-    
     if (lastDate !== today) {
       if (lastDate) {
         const last = new Date(lastDate);
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        
-        if (last.toDateString() === yesterday.toDateString()) {
-          newStreak += 1;
-        } else {
-          newStreak = 1;
-        }
-      } else {
-        newStreak = 1;
-      }
+        if (last.toDateString() === yesterday.toDateString()) newStreak += 1;
+        else newStreak = 1;
+      } else newStreak = 1;
     }
     
-    // Achievements logic
+    // Achievements
     const newAchievements = [...progress.achievements];
     if (progress.quizzesCompleted === 0 && !newAchievements.includes('first_quiz')) newAchievements.push('first_quiz');
     if (scorePercentage === 100 && !newAchievements.includes('topic_master')) newAchievements.push('topic_master');
     if (timeSpent < 120 && !newAchievements.includes('speed_demon')) newAchievements.push('speed_demon');
     if (newStreak >= 3 && !newAchievements.includes('dedicated_learner')) newAchievements.push('dedicated_learner');
     
-    // Only update topic completion/scores for normal quizzes
     const newCompletedTopics = { ...progress.completedTopics };
     const newTopicScores = { ...progress.topicScores };
 
@@ -241,6 +349,10 @@ function Quiz({ mode, progress, updateProgress }) {
       }
     }
     
+    // Clear active quiz from progress since it's done
+    const activeQuizzes = { ...(progress.activeQuizzes || {}) };
+    delete activeQuizzes[quizContextId];
+
     updateProgress({
       completedTopics: newCompletedTopics,
       totalPoints: progress.totalPoints + totalPoints,
@@ -248,7 +360,8 @@ function Quiz({ mode, progress, updateProgress }) {
       lastStudyDate: today,
       quizzesCompleted: progress.quizzesCompleted + 1,
       achievements: newAchievements,
-      topicScores: newTopicScores
+      topicScores: newTopicScores,
+      activeQuizzes // Saves the deletion
     });
     
     setQuizComplete({ 
@@ -362,9 +475,9 @@ function Quiz({ mode, progress, updateProgress }) {
         <h2 className="question-text">{renderMathText(currentQuestion.question)}</h2>
 
         <div className="options-list">
-          {currentQuestion.options.map((option, index) => {
+          {currentQuestion.shuffledOptions.map((optionObj, index) => {
             const isSelected = selectedAnswer === index;
-            const isCorrect = index === currentQuestion.correct;
+            const isCorrect = optionObj.originalIndex === currentQuestion.correct;
             const showStatus = showExplanation;
             
             let optionClass = 'option';
@@ -382,7 +495,7 @@ function Quiz({ mode, progress, updateProgress }) {
                 <span className="option-letter">
                   {String.fromCharCode(65 + index)}
                 </span>
-                <span className="option-text">{renderMathText(option)}</span>
+                <span className="option-text">{renderMathText(optionObj.text)}</span>
                 {showStatus && isCorrect && (
                   <CheckCircle className="option-icon" size={24} />
                 )}
@@ -395,9 +508,11 @@ function Quiz({ mode, progress, updateProgress }) {
         </div>
 
         {showExplanation && (
-          <div className={`explanation ${selectedAnswer === currentQuestion.correct ? 'correct' : 'incorrect'}`}>
+          <div className={`explanation ${
+            currentQuestion.shuffledOptions[selectedAnswer].originalIndex === currentQuestion.correct ? 'correct' : 'incorrect'
+          }`}>
             <div className="explanation-header">
-              {selectedAnswer === currentQuestion.correct ? (
+              {currentQuestion.shuffledOptions[selectedAnswer].originalIndex === currentQuestion.correct ? (
                 <>
                   <CheckCircle size={24} />
                   <span>Correct!</span>

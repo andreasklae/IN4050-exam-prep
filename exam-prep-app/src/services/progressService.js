@@ -13,7 +13,8 @@ export const getProgress = async (user) => {
     quizzesCompleted: 0,
     achievements: [],
     topicScores: {},
-    incorrectQuestions: [] // Array of { topicId, questionId }
+    incorrectQuestions: [], // Array of { topicId, questionId }
+    activeQuizzes: {} // Map of topicId -> { currentQuestionIndex, answers, questionsOrder }
   };
 
   // Try Firestore first

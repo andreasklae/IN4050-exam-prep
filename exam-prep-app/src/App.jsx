@@ -57,13 +57,17 @@ function App() {
     };
   }, [currentUser]);
 
-  // Save progress to Firestore whenever it changes (but not during initial load)
+  // Save progress to Firestore with debounce
   useEffect(() => {
     if (currentUser && progress && !isLoading && !initialLoadRef.current) {
-      savingRef.current = true;
-      saveProgress(currentUser, progress).finally(() => {
-        savingRef.current = false;
-      });
+      const timeoutId = setTimeout(() => {
+        savingRef.current = true;
+        saveProgress(currentUser, progress).finally(() => {
+          savingRef.current = false;
+        });
+      }, 2000); // Debounce for 2 seconds
+
+      return () => clearTimeout(timeoutId);
     }
   }, [progress, currentUser, isLoading]);
 
