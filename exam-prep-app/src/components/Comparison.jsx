@@ -2,7 +2,18 @@ import { useNavigate } from 'react-router-dom';
 import { topics } from '../data/curriculum';
 import { ArrowLeft, Trophy, TrendingUp, Target, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getProgress } from '../services/progressService';
 import './Comparison.css';
+
+// Helper function to cap scores at 100%
+const capScores = (progress) => {
+  if (!progress || !progress.topicScores) return progress;
+  const cappedScores = {};
+  for (const [topicId, score] of Object.entries(progress.topicScores)) {
+    cappedScores[topicId] = typeof score === 'number' && score > 100 ? 100 : score;
+  }
+  return { ...progress, topicScores: cappedScores };
+};
 
 function Comparison({ currentUser, onUserSwitch }) {
   const navigate = useNavigate();
@@ -10,41 +21,76 @@ function Comparison({ currentUser, onUserSwitch }) {
   const [andreasProgress, setAndreasProgress] = useState(null);
 
   useEffect(() => {
-    // Load both users' progress from localStorage
-    const johnData = localStorage.getItem('examPrepProgress_john');
-    const andreasData = localStorage.getItem('examPrepProgress_andreas');
+    const loadProgress = async () => {
+      // Load both users' progress from Firebase (with localStorage fallback)
+      try {
+        const [johnData, andreasData] = await Promise.all([
+          getProgress('john'),
+          getProgress('andreas')
+        ]);
+        
+        // Cap scores at 100% and set state
+        setJohnProgress(capScores(johnData || {
+          completedTopics: {},
+          totalPoints: 0,
+          level: 1,
+          streak: 0,
+          quizzesCompleted: 0,
+          achievements: [],
+          topicScores: {}
+        }));
+        
+        setAndreasProgress(capScores(andreasData || {
+          completedTopics: {},
+          totalPoints: 0,
+          level: 1,
+          streak: 0,
+          quizzesCompleted: 0,
+          achievements: [],
+          topicScores: {}
+        }));
+      } catch (error) {
+        console.error('Error loading progress:', error);
+        // Fallback to localStorage
+        const johnData = localStorage.getItem('examPrepProgress_john');
+        const andreasData = localStorage.getItem('examPrepProgress_andreas');
+        
+        setJohnProgress(capScores(johnData ? JSON.parse(johnData) : {
+          completedTopics: {},
+          totalPoints: 0,
+          level: 1,
+          streak: 0,
+          quizzesCompleted: 0,
+          achievements: [],
+          topicScores: {}
+        }));
+        
+        setAndreasProgress(capScores(andreasData ? JSON.parse(andreasData) : {
+          completedTopics: {},
+          totalPoints: 0,
+          level: 1,
+          streak: 0,
+          quizzesCompleted: 0,
+          achievements: [],
+          topicScores: {}
+        }));
+      }
+    };
     
-    setJohnProgress(johnData ? JSON.parse(johnData) : {
-      completedTopics: {},
-      totalPoints: 0,
-      level: 1,
-      streak: 0,
-      quizzesCompleted: 0,
-      achievements: [],
-      topicScores: {}
-    });
-    
-    setAndreasProgress(andreasData ? JSON.parse(andreasData) : {
-      completedTopics: {},
-      totalPoints: 0,
-      level: 1,
-      streak: 0,
-      quizzesCompleted: 0,
-      achievements: [],
-      topicScores: {}
-    });
+    loadProgress();
   }, []);
 
   if (!johnProgress || !andreasProgress) {
     return <div className="comparison-page">Loading...</div>;
   }
 
+  // Calculate averages with scores capped at 100%
   const johnAverage = Object.keys(johnProgress.topicScores).length > 0
-    ? Math.round(Object.values(johnProgress.topicScores).reduce((a, b) => a + b, 0) / Object.keys(johnProgress.topicScores).length)
+    ? Math.round(Object.values(johnProgress.topicScores).map(s => Math.min(s, 100)).reduce((a, b) => a + b, 0) / Object.keys(johnProgress.topicScores).length)
     : 0;
 
   const andreasAverage = Object.keys(andreasProgress.topicScores).length > 0
-    ? Math.round(Object.values(andreasProgress.topicScores).reduce((a, b) => a + b, 0) / Object.keys(andreasProgress.topicScores).length)
+    ? Math.round(Object.values(andreasProgress.topicScores).map(s => Math.min(s, 100)).reduce((a, b) => a + b, 0) / Object.keys(andreasProgress.topicScores).length)
     : 0;
 
   const johnCompleted = Object.keys(johnProgress.completedTopics).length;
@@ -190,8 +236,9 @@ function Comparison({ currentUser, onUserSwitch }) {
           <h2>Topic-by-Topic Breakdown</h2>
           <div className="topic-comparison-grid">
             {topics.map(topic => {
-              const johnScore = johnProgress.topicScores[topic.id] || 0;
-              const andreasScore = andreasProgress.topicScores[topic.id] || 0;
+              // Cap scores at 100% when displaying (defensive)
+              const johnScore = Math.min(johnProgress.topicScores[topic.id] || 0, 100);
+              const andreasScore = Math.min(andreasProgress.topicScores[topic.id] || 0, 100);
               const leader = johnScore > andreasScore ? 'john' : andreasScore > johnScore ? 'andreas' : 'tie';
               
               return (

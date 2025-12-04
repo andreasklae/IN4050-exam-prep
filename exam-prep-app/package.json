@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "fix-scores": "node fix-scores.js"
   },
   "dependencies": {
     "firebase": "^12.6.0",

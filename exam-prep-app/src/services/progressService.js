@@ -2,6 +2,16 @@
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
+// Helper function to cap topicScores at 100%
+const capTopicScores = (progress) => {
+  if (!progress || !progress.topicScores) return progress;
+  const cappedScores = {};
+  for (const [topicId, score] of Object.entries(progress.topicScores)) {
+    cappedScores[topicId] = typeof score === 'number' && score > 100 ? 100 : score;
+  }
+  return { ...progress, topicScores: cappedScores };
+};
+
 // Get progress from Firestore or localStorage
 export const getProgress = async (user) => {
   const defaultProgress = {
@@ -27,7 +37,9 @@ export const getProgress = async (user) => {
         const firestoreData = userDoc.data();
         // Merge with any local data (localStorage takes precedence for conflicts)
         const localData = getLocalProgress(user);
-        return { ...defaultProgress, ...firestoreData, ...localData };
+        const merged = { ...defaultProgress, ...firestoreData, ...localData };
+        // Cap scores at 100% before returning
+        return capTopicScores(merged);
       }
     } catch (error) {
       // Only log if it's not an offline error or quota exceeded
@@ -42,7 +54,8 @@ export const getProgress = async (user) => {
   }
 
   // Fallback to localStorage
-  return getLocalProgress(user) || defaultProgress;
+  const localProgress = getLocalProgress(user) || defaultProgress;
+  return capTopicScores(localProgress);
 };
 
 // Save progress to both Firestore and localStorage
@@ -82,9 +95,11 @@ export const subscribeToProgress = (user, callback) => {
         // Merge with localStorage (localStorage takes precedence)
         const localData = getLocalProgress(user);
         const merged = { ...data, ...localData };
-        // Update localStorage with Firestore data
-        saveLocalProgress(user, merged);
-        callback(merged);
+        // Cap scores at 100% before saving/returning
+        const capped = capTopicScores(merged);
+        // Update localStorage with Firestore data (with capped scores)
+        saveLocalProgress(user, capped);
+        callback(capped);
       }
     }, (error) => {
       // Ignore offline/quota errors

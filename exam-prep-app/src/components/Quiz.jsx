@@ -296,9 +296,9 @@ function Quiz({ mode, progress, updateProgress }) {
   };
 
   const completeQuiz = () => {
-    const correctCount = answers.filter(a => a.correct).length + 
-                        (selectedAnswer !== null && 
-                         currentQuestion.shuffledOptions[selectedAnswer].originalIndex === currentQuestion.correct ? 1 : 0);
+    // The last answer is already in the answers array from handleSubmitAnswer
+    // So we just count from answers array - no need to double-count the current question
+    const correctCount = answers.filter(a => a.correct).length;
     
     const totalQuestions = questions.length;
     const scorePercentage = Math.round((correctCount / totalQuestions) * 100);
